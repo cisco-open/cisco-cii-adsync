@@ -189,6 +189,24 @@ $script:excludedAttributes = @(
 =============================================================================
 #>
 
+# Mandatory attributes that cannot be excluded (required for functionality)
+$script:mandatoryAttributes = @(
+    "objectGUID",
+    "samAccountName",
+    "distinguishedName",
+    "displayName",
+    "givenName",
+    "sn",
+    "mail"
+    "userPrincipalName",
+    "userAccountControl",
+    "whenCreated",
+    "whenChanged",
+    "lastLogon",
+    "pwdLastSet",
+    "badPasswordTime"
+)
+
 # Logging functions
 function Write-Log {
     param([string]$Message)
@@ -317,9 +335,9 @@ function Get-ADAttributes {
         [System.DirectoryServices.ResultPropertyCollection]$Properties
     )
     $adAttributes = @{}
-    # Skip properties on the exclusion list, convert others to friendly strings
+    # Skip properties on the exclusion list (unless they're mandatory), convert others to friendly strings
     foreach ($propertyName in $Properties.PropertyNames) {
-        if ($script:excludedAttributes -contains $propertyName) {
+        if ($script:excludedAttributes -contains $propertyName -and $script:mandatoryAttributes -notcontains $propertyName) {
             continue
         }
         # Convert property values to friendly strings
