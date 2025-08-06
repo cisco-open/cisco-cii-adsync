@@ -364,7 +364,7 @@ Start-Sleep -Milliseconds $SleepTime
 Write-Status "Created key file $KeyFilePath"
 Write-Status "Created encrypted config file $OutputConfigPath"
 Write-Host "You can now use these with the ADSync script (copied to clipboard)`ne.g."
-Write-Host "`t.\ADSync.ps1 -KeyFilePath $KeyFilePath -ConfigFilePath $OutputConfigPath"
+Write-Host "`t.\ADSync.ps1 -KeyFilePath $KeyFilePath -ConfigFilePath $OutputConfigPath" -ForegroundColor Green
 ".\ADSync.ps1 -KeyFilePath $KeyFilePath -ConfigFilePath $OutputConfigPath" | Set-Clipboard
 
 # Step 7: Offer to delete the original config file for security
