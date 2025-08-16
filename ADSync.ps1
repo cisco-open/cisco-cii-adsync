@@ -29,7 +29,7 @@
     (Optional) Output file path for SCIM preview mode. Default: "scim-preview-{timestamp}.jsonl"
 
 .PARAMETER ScimBulkSize
-    (Optional) Number of operations per SCIM bulk request. Default: 100.
+    (Optional) Number of operations per SCIM bulk request. Default: 50.
 
 .EXAMPLE
     .\ADSync.ps1 -KeyFilePath .\cisco-cii-AD-enryption.key -ConfigFilePath .\cisco-cii-AD-encrypted-config.json
@@ -96,7 +96,7 @@ param(
     [int]$UserBatchSize = 500,
 
     [Parameter(ParameterSetName = "Default")]
-    [int]$ScimBulkSize = 100
+    [int]$ScimBulkSize = 50
 )
 
 $ScriptVersion = "1.0"
