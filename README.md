@@ -223,7 +223,7 @@ Security is paramount. The script implements robust measures to protect your Cis
 
 ## Troubleshooting
 
-*   **Eror about Not Digitally Signed**: Cisco is in the process of digitally signing these PowerShell scripts.  If you have an early release you may encounter this error if you AD domain blocks running scripts that are not signed.  As a temporary workaround you can use this command to allow the unsigned script to run in the PowerShell session:
+*   **Error about Not Digitally Signed**: Cisco is in the process of digitally signing these PowerShell scripts.  If you have an early release you may encounter this error if you AD domain blocks running scripts that are not signed.  As a temporary workaround you can use this command to allow the unsigned script to run in the PowerShell session:
 ```
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```
@@ -256,4 +256,5 @@ Licensed under the Apache License, Version 2.0. See the script header for full l
 ---
 
 For additional support and documentation, visit: https://docs.oort.io/integrations
+
 
