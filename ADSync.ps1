@@ -180,7 +180,8 @@ $script:excludedAttributes = @(
     "lmPwdHistory",
     "ntPwdHistory",
     "supplementalCredentials",
-    "msDS-KeyCredentialLink"
+    "msDS-KeyCredentialLink",
+    "memberOf"
 )
 
 <#
