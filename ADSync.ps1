@@ -145,7 +145,17 @@ $script:classificationRules = @{
         # Usernames    = @("jbrown_svp", "asmith_cfo")
         Usernames    = @()
     }
-}
+    # Define rules for external accounts
+    isExternalAccount = @{
+        # Groups       = @("External Users", "Partners", "Contractors")
+        Groups       = @()
+        # OUs          = @("OU=External,DC=acme,DC=com", "OU=Partners,DC=acme,DC=com")
+        OUs          = @()
+        # NamePatterns = @("ext_*", "*contractor*", "*partner*")
+        NamePatterns = @()
+        # Usernames    = @("vendor1", "consultant_jsmith")
+        Usernames    = @()
+    }}
 
 # Include users in these OUs or with specific naming conventions
 $script:includeRules = @{
@@ -671,6 +681,8 @@ function ConvertTo-ScimUser {
         "guest"
     } elseif ($ciiAttributes.isExecutive) {
         "executive"
+    } elseif ($ciiAttributes.isExternalAccount) {
+        "external"
     } else {
         "employee"
     }
@@ -780,6 +792,7 @@ function Get-CIIAttributes {
         isServiceAccount = $false
         isAdmin = $false
         isExecutive = $false
+        isExternalAccount = $false
     }
 
     $sam = $adAttributes.samAccountName
@@ -831,6 +844,7 @@ function Get-CIIAttributes {
         isServiceAccount = $classifications.isServiceAccount
         isAdmin         = $classifications.isAdmin
         isExecutive     = $classifications.isExecutive
+        isExternalAccount = $classifications.isExternalAccount
     }
 
     if ($adAttributes.whenCreated -ne $null) {
