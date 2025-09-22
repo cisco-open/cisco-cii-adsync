@@ -13,6 +13,9 @@
 .PARAMETER ConfigFilePath
     Path to the encrypted configuration file containing SCIM endpoint and credentials.
 
+.PARAMETER BaseDN
+    (Optional) Base DN to search for users. Defaults to the domain DN if not specified.
+
 .PARAMETER Preview
     (Optional) Switch to enable preview mode. Outputs processed AD user data to a JSON file without sending to CII.
 
@@ -30,6 +33,9 @@
 
 .PARAMETER ScimBulkSize
     (Optional) Number of operations per SCIM bulk request. Default: 50.
+
+.PARAMETER NoGroups
+    (Optional) Switch to skip uploading user groups to CII.
 
 .EXAMPLE
     .\ADSync.ps1 -KeyFilePath .\cisco-cii-AD-enryption.key -ConfigFilePath .\cisco-cii-AD-encrypted-config.json
@@ -96,7 +102,10 @@ param(
     [int]$UserBatchSize = 500,
 
     [Parameter(ParameterSetName = "Default")]
-    [int]$ScimBulkSize = 50
+    [int]$ScimBulkSize = 50,
+
+    [Parameter(ParameterSetName = "Default", HelpMessage="Skip uploading user groups")]
+    [switch]$NoGroups
 )
 
 $ScriptVersion = "1.0"
@@ -402,6 +411,9 @@ function Initialize-OutputFiles {
             Remove-Item $ScimPreviewFile -Force
         }
     }
+    if ($NoGroups) {
+        Write-Status "NoGroups parameter specified - user groups will be skipped"
+    }
 }
 
 # Function to pre-resolve group SIDs for classification rules
@@ -644,10 +656,12 @@ function ConvertTo-ScimUser {
 
     # Group objects
     $scimGroups = @()
-    foreach ($group in $groups) {
-        $scimGroups += @{
-            value = $group.sid
-            display = $group.name
+    if (-not $NoGroups) {
+        foreach ($group in $groups) {
+            $scimGroups += @{
+                value = $group.sid
+                display = $group.name
+            }
         }
     }
 
@@ -756,7 +770,8 @@ function Send-BatchOfUsers {
 # Get a user's group info (names and SIDs)
 function Get-UserGroupInfo {
     param(
-        [string]$DistinguishedName
+        [string]$DistinguishedName,
+        [switch]$SkipGroupNames = $false
     )
     $groups = @()
     $userSIDs = @()
@@ -766,12 +781,15 @@ function Get-UserGroupInfo {
         foreach ($tg in $tokenGroups) {
             $userSIDs += $tg.Value
         }
-        foreach ($sid in $tokenGroups) {
-            $groupEntry = @{
-                sid  = $sid.Value
-                name = Resolve-SID -sid $sid
+        # Only resolve group names if not skipping
+        if (-not $SkipGroupNames) {
+            foreach ($sid in $tokenGroups) {
+                $groupEntry = @{
+                    sid  = $sid.Value
+                    name = Resolve-SID -sid $sid
+                }
+                $groups += $groupEntry
             }
-            $groups += $groupEntry
         }
     }
     return @{
@@ -981,7 +999,7 @@ function Process-Users {
         # Get each users's AD attributes, groups and classification
         $Processed++
         $adAttributes = Get-ADAttributes -Properties $props
-        $userGroupInfo = Get-UserGroupInfo -DistinguishedName $adAttributes.DistinguishedName
+        $userGroupInfo = Get-UserGroupInfo -DistinguishedName $adAttributes.DistinguishedName -SkipGroupNames:$NoGroups
         $ciiAttributes = Get-CIIAttributes -adAttributes $adAttributes -userSIDs $userGroupInfo.UserSIDs
 
         # Batch users until we have enough to send
