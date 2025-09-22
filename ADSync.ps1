@@ -217,7 +217,7 @@ $script:mandatoryAttributes = @(
     "displayName",
     "givenName",
     "sn",
-    "mail"
+    "mail",
     "userPrincipalName",
     "userAccountControl",
     "whenCreated",
