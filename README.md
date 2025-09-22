@@ -188,6 +188,25 @@ The CII `ADSync.ps1` script is highly customizable to fit your specific Active D
 > }
 > ```
 
+If you use a custom AD attribute to define you user roles it is also possible to configure the script to use it and map its string values to CII user types.
+> ```powershell
+> # Custom AD attribute classification and CII userType mapping
+> $script:customAttributeMapping = @{
+>     # Specify the AD attribute name that contains classification values
+>     AttributeName = "yourCustomAttribute"  # e.g. "extensionAttribute1" or "customEmployeeType"
+>     # Map AD attribute values to CII userType values
+>     ValueMappings = @{
+>         "user.employee.regular" = "employee"
+>         "user.admin"            = "admin"
+>         "user.service"          = "service"
+>         "user.contractor"       = "external"
+>         "user.executive"        = "executive"
+>     }
+>     # Default userType if attribute value doesn't match any mapping
+>     DefaultUserType = "employee"
+> }
+> ```
+
 *   **User Population - Alternative Base**:
     By default, the script will attempt to sync all users in the detected primary domain. You can modify this behavior in two ways. By using the -BaseDN parameter you can limit the sync to users in a specific OU.
 
@@ -256,5 +275,6 @@ Licensed under the Apache License, Version 2.0. See the script header for full l
 ---
 
 For additional support and documentation, visit: https://docs.oort.io/integrations
+
 
 
