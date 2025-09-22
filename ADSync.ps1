@@ -1078,6 +1078,9 @@ function Process-Users {
 # Main script entry point
 # -------------------------
 
+# Configure secure TLS protocols (older Server versions may not support TLS 1.2 or 1.3 by default)
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls13
+
 Initialize-OutputFiles          # Initialize log and preview files
 
 # Get auth token using the provided key and config file (skip if preview mode)
