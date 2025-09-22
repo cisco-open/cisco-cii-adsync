@@ -164,7 +164,25 @@ $script:classificationRules = @{
         NamePatterns = @()
         # Usernames    = @("vendor1", "consultant_jsmith")
         Usernames    = @()
-    }}
+    }
+}
+
+# Custom AD attribute classification and CII userType mapping
+$script:customAttributeMapping = @{
+    # Specify the AD attribute name that contains classification values
+    AttributeName = ""  # e.g. "extensionAttribute1" or "customEmployeeType"
+    # Map AD attribute values to CII userType values
+    ValueMappings = @{
+        # "user.employee.regular" = "employee"
+        # "user.admin.web"        = "admin"
+        # "user.admin.domain"     = "admin"
+        # "user.service.app"      = "service"
+        # "user.contractor"       = "external"
+        # "user.executive"        = "executive"
+    }
+    # Default userType if attribute value doesn't match any mapping
+    DefaultUserType = "employee"
+}
 
 # Include users in these OUs or with specific naming conventions
 $script:includeRules = @{
@@ -217,7 +235,7 @@ $script:mandatoryAttributes = @(
     "displayName",
     "givenName",
     "sn",
-    "mail"
+    "mail",
     "userPrincipalName",
     "userAccountControl",
     "whenCreated",
@@ -326,7 +344,12 @@ function Get-PropertyString {
                         [Convert]::ToBase64String($value)
                     }
                     default {
-                        [BitConverter]::ToString($value) -replace "-", ""
+                        try {
+                            $stringValue = [System.Text.Encoding]::Default.GetString($value).TrimEnd([char]0)
+                            if ($stringValue) { $stringValue } else { [BitConverter]::ToString($value) -replace "-", "" }
+                        } catch {
+                            [BitConverter]::ToString($value) -replace "-", ""
+                        }
                     }
                 }
             }
@@ -561,7 +584,7 @@ function Send-ScimBulkRequest {
         Operations = $BulkOperations
     }
     $headers = @{
-        "Authorization" = "Bearer $bearerToken"
+        "Authorization" = "Bearer $script:bearerToken"
         "Content-Type" = "application/scim+json"
     }
     try {
@@ -816,44 +839,64 @@ function Get-CIIAttributes {
     $sam = $adAttributes.samAccountName
     $dn = $adAttributes.distinguishedName
 
-    foreach ($category in $script:classificationRules.Keys) {
-        $rule = $script:classificationRules[$category]
-
-        # Groups
-        $targetGroupSIDs = $script:resolvedGroupSIDs[$category].Values
-        $inGroup = $false
-        if ($userSIDs.Count -gt 0 -and $targetGroupSIDs.Count -gt 0) {
-            $inGroup = Test-UserInGroupsByToken -UserTokenGroupSIDs $userSIDs -TargetGroupSIDs $targetGroupSIDs
-        }
-
-        # OUs
-        $inOU = $false
-        if ($rule.OUs.Count -gt 0) {
-            foreach ($ou in $rule.OUs) {
-                if ($dn -like "*$ou") {
-                    $inOU = $true
-                    break
-                }
+    # First check custom attribute mapping
+    $customUserType = $null
+    if ($script:customAttributeMapping.AttributeName -and $adAttributes.ContainsKey($script:customAttributeMapping.AttributeName)) {
+        $attributeValue = $adAttributes[$script:customAttributeMapping.AttributeName]
+        if ($script:customAttributeMapping.ValueMappings.ContainsKey($attributeValue)) {
+            $customUserType = $script:customAttributeMapping.ValueMappings[$attributeValue]
+            # Set classification flags based on custom userType mapping
+            switch ($customUserType) {
+                "admin" { $classifications.isAdmin = $true }
+                "service" { $classifications.isServiceAccount = $true }
+                "executive" { $classifications.isExecutive = $true }
+                "external" { $classifications.isExternalAccount = $true }
+                # "employee", "guest" and other types don't set any special flags
             }
         }
+    }
 
-        # Name patterns
-        $matchesPattern = $false
-        if ($rule.NamePatterns.Count -gt 0) {
-            foreach ($pattern in $rule.NamePatterns) {
-                if ($sam -like $pattern) {
-                    $matchesPattern = $true
-                    break
+    # If no custom attribute mapping matched, use the rule-based classification
+    if (-not $customUserType) {
+        foreach ($category in $script:classificationRules.Keys) {
+            $rule = $script:classificationRules[$category]
+
+            # Groups
+            $targetGroupSIDs = $script:resolvedGroupSIDs[$category].Values
+            $inGroup = $false
+            if ($userSIDs.Count -gt 0 -and $targetGroupSIDs.Count -gt 0) {
+                $inGroup = Test-UserInGroupsByToken -UserTokenGroupSIDs $userSIDs -TargetGroupSIDs $targetGroupSIDs
+            }
+
+            # OUs
+            $inOU = $false
+            if ($rule.OUs.Count -gt 0) {
+                foreach ($ou in $rule.OUs) {
+                    if ($dn -like "*$ou") {
+                        $inOU = $true
+                        break
+                    }
                 }
             }
-        }
 
-        # Explicit usernames
-        $inUserList = $rule.Usernames -contains $sam
+            # Name patterns
+            $matchesPattern = $false
+            if ($rule.NamePatterns.Count -gt 0) {
+                foreach ($pattern in $rule.NamePatterns) {
+                    if ($sam -like $pattern) {
+                        $matchesPattern = $true
+                        break
+                    }
+                }
+            }
 
-        # Match if any criteria true
-        if ($inGroup -or $inOU -or $matchesPattern -or $inUserList) {
-            $classifications[$category] = $true
+            # Explicit usernames
+            $inUserList = $rule.Usernames -contains $sam
+
+            # Match if any criteria true
+            if ($inGroup -or $inOU -or $matchesPattern -or $inUserList) {
+                $classifications[$category] = $true
+            }
         }
     }
 
@@ -962,7 +1005,7 @@ function Process-Users {
     }
 
     # Get users from AD
-    $Searcher = New-Object System.DirectoryServices.DirectorySearcher($DirectoryEntry, "(&(objectClass=user)(objectCategory=person))", @('*'))
+    $Searcher = New-Object System.DirectoryServices.DirectorySearcher($script:DirectoryEntry, "(&(objectClass=user)(objectCategory=person))", @('*'))
     $Searcher.PageSize = $UserBatchSize
     $Results = $Searcher.FindAll()
 
