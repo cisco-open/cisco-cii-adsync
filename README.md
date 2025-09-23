@@ -167,25 +167,45 @@ The CII `ADSync.ps1` script is highly customizable to fit your specific Active D
 
 > ```powershell
 > $script:classificationRules = @{
+>     # Define rules for service accounts
 >     isServiceAccount = @{
->         Groups       = @("Service Accounts", "SQL Service Accounts")
->         OUs          = @("OU=Service Accounts,DC=acme,DC=com")
->         NamePatterns = @("svc_*", "sa_*")
->         Usernames    = @("svc_special", "krbtgt")
+>         # Groups       = @("Service Accounts", "SQL Service Accounts")
+>         Groups       = @()
+>         # OUs          = @("OU=Service Accounts,DC=acme,DC=com")
+>         OUs          = @()
+>         # NamePatterns = @("svc_*", "sa_*")
+>         NamePatterns = @()
+>         # Usernames    = @("svc_special", "krbtgt")
+>         Usernames    = @()
 >     }
+>     # Define rules for administrators
 >     isAdmin = @{
 >         Groups       = @("Domain Admins", "Enterprise Admins", "Administrators")
 >         OUs          = @()
 >         NamePatterns = @()
->         Usernames    = @("Administrator", "it_admin")
+>         Usernames    = @("Administrator")
 >     }
+>     # Define rules for executives/special accounts
 >     isExecutive = @{
->         Groups       = @("Executives", "Board Members")
->         OUs          = @("OU=Executive OU,DC=acme,DC=com")
+>         # Groups       = @("Executives", "Board Members")
+>         Groups       = @()
+>         # OUs          = @("OU=Executive OU,DC=acme,DC=com")
+>         OUs          = @()
 >         NamePatterns = @()
->         Usernames    = @("ceo", "cfo")
+>         # Usernames    = @("jbrown_svp", "asmith_cfo")
+>         Usernames    = @()
 >     }
-> }
+>     # Define rules for external accounts
+>     isExternalAccount = @{
+>         # Groups       = @("External Users", "Partners", "Contractors")
+>         Groups       = @()
+>         # OUs          = @("OU=External,DC=acme,DC=com", "OU=Partners,DC=acme,DC=com")
+>         OUs          = @()
+>         # NamePatterns = @("ext_*", "*contractor*", "*partner*")
+>         NamePatterns = @()
+>         # Usernames    = @("vendor1", "consultant_jsmith")
+>         Usernames    = @()
+>     }
 > ```
 
 If you use a custom AD attribute to define you user roles it is also possible to configure the script to use it and map its string values to CII user types.
@@ -275,6 +295,7 @@ Licensed under the Apache License, Version 2.0. See the script header for full l
 ---
 
 For additional support and documentation, visit: https://docs.oort.io/integrations
+
 
 
 
