@@ -182,6 +182,9 @@ function ValidateScimService($apiEndpoint, $token) {
     }
 }
 
+# Configure secure TLS protocols (older Server versions may not support TLS 1.2 or 1.3 by default)
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls13
+
 # Log file setup
 $LogFile = ".\Provision.log"
 $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
