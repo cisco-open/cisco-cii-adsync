@@ -99,9 +99,12 @@ To get started with the Active Directory integration with Cisco Identity Intelli
 Once installed and configured, you can run the CII `ADSync.ps1` script to collect and send AD data to Cisco Identity Intelligence.
 
 1.  **Preview Mode (Recommended for Testing)**:
-    Before performing a full data transfer, it is highly recommended to run the script in "preview mode." This mode allows you to see exactly what data would be sent to Cisco Identity Intelligence without actually sending it. The script will generate a local file (e.g., `ad-preview-YYYYMMDD-HHMMSS.jsonl`) containing the collected user data.
+    Before performing a full data transfer, it is highly recommended to run the script in "preview mode." This mode allows you to see exactly what data would be sent to Cisco Identity Intelligence without actually sending it.
 
     To activate preview mode, include the `-Preview` parameter when executing the script.
+    The script will generate a local file (e.g., `ad-preview-YYYYMMDD-HHMMSS.jsonl`) containing the collected user data.
+
+    For each user, there is a 'adAttributes', 'groups' and 'ciiAttributes' section.  The 'adAttributes' section contains the exported AD attributes - review these and adjust the excluded attributes list if required.  The 'ciiAttributes' section contains the results of your classification rules - use this to check your classification rules are working as expected.
 
 > ```powershell
 > .\ADSync.ps1 -KeyFilePath .\your-encryption.key -ConfigFilePath .\your-encrypted-config.json -Preview
@@ -296,6 +299,7 @@ Licensed under the Apache License, Version 2.0. See the script header for full l
 ---
 
 For additional support and documentation, visit: https://docs.oort.io/integrations
+
 
 
 
