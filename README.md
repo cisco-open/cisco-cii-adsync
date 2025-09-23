@@ -276,6 +276,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 *   **Preview Mode**: Utilize the preview mode (as described in Execution Instructions) to diagnose issues related to data collection, attribute filtering, or user classification without affecting your live CII environment. This allows you to inspect the data before it's sent.
 *   **Connectivity**: permit the server to contact the CII cloud service. 
 *   **Permissions**: Ensure the user account running the script has sufficient read permissions within Active Directory to access the necessary user and group objects.
+*   **Excessive Groups**: If you have an excessive number of groups, you can use the -NoGroups parameter to skip uploading these to CII.
 
 For more in-depth troubleshooting, refer to the official documentation or reach out to Cisco support.
 
@@ -295,6 +296,7 @@ Licensed under the Apache License, Version 2.0. See the script header for full l
 ---
 
 For additional support and documentation, visit: https://docs.oort.io/integrations
+
 
 
 
