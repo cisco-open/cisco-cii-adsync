@@ -147,6 +147,8 @@ The CII `ADSync.ps1` script is highly customizable to fit your specific Active D
 *   **Attribute Filtering**:
     You can configure which Active Directory attributes to exclude to control the data sent to CII. The script includes a list of excluded attributes where you can add any properties you do not wish to be collected.
 
+    Futher, if you receive a warning about any large attributes they should be reviewed and potentially excluded.
+
 > ```powershell
 > $script:excludedAttributes = @(
 >     "ntSecurityDescriptor",
