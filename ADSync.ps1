@@ -37,6 +37,9 @@
 .PARAMETER NoGroups
     (Optional) Switch to skip uploading user groups to CII.
 
+.PARAMETER AttributeSizeWarningThreshold
+    (Optional) Size threshold in bytes for warning about large attributes. Set to 0 to disable warnings. Default: 2048.
+
 .EXAMPLE
     .\ADSync.ps1 -KeyFilePath .\cisco-cii-AD-enryption.key -ConfigFilePath .\cisco-cii-AD-encrypted-config.json
 
@@ -105,7 +108,10 @@ param(
     [int]$ScimBulkSize = 50,
 
     [Parameter(ParameterSetName = "Default", HelpMessage="Skip uploading user groups")]
-    [switch]$NoGroups
+    [switch]$NoGroups,
+
+    [Parameter(ParameterSetName = "Default", HelpMessage="Size threshold in bytes for warning about large attributes")]
+    [int]$AttributeSizeWarningThreshold = 2048
 )
 
 $ScriptVersion = "1.0"
@@ -329,6 +335,8 @@ function Get-PropertyString {
         if ($null -eq $value) {
             continue  # Skip null values
         }
+        # Check attribute size and warn if needed
+        Check-AttributeSize -PropertyName $PropertyName -Value $value
         switch ($value.GetType().Name) {
             "Byte[]" {
                 switch ($PropertyName.ToLower()) {
@@ -437,6 +445,11 @@ function Initialize-OutputFiles {
     if ($NoGroups) {
         Write-Status "NoGroups parameter specified - user groups will be skipped"
     }
+}
+
+# Initialize attribute size warning tracking
+function Initialize-AttributeSizeWarnings {
+    $script:attributeSizeWarnings = @{}
 }
 
 # Function to pre-resolve group SIDs for classification rules
@@ -572,6 +585,45 @@ function Test-UserShouldBeIncluded {
         }
     }
     return $includeMatch
+}
+
+# Check attribute size and warn if needed (only once per attribute)
+function Check-AttributeSize {
+    param(
+        [string]$PropertyName,
+        [object]$Value
+    )
+    if (-not $AttributeSizeWarningThreshold -or $script:attributeSizeWarnings.ContainsKey($PropertyName)) {
+        return
+    }
+    $valueSize = 0
+    $valueType = $Value.GetType().Name
+    if ($valueType -eq "Byte[]") {
+        $valueSize = $Value.Length
+    } else {
+        $valueSize = [System.Text.Encoding]::UTF8.GetByteCount($Value.ToString())
+    }
+    if ($valueSize -gt $AttributeSizeWarningThreshold) {
+        Write-Warning "Large attribute detected: '$PropertyName' is $([math]::Round($valueSize/1024, 2))KB"
+
+        $script:attributeSizeWarnings[$PropertyName] = $valueSize
+    }
+}
+
+# Show summary of large attributes found during processing
+function Show-AttributeSizeSummary {
+    if (-not $script:attributeSizeWarnings -or $script:attributeSizeWarnings.Count -eq 0) {
+        return
+    }
+    Write-Host "`n=== Large Attribute Warning ===" -ForegroundColor Yellow
+    Write-Host "The following attributes exceeded the size threshold ($([math]::Round($AttributeSizeWarningThreshold/1024, 2))KB):" -ForegroundColor Yellow
+
+    foreach ($attr in $script:attributeSizeWarnings.Keys | Sort-Object) {
+        $size = [math]::Round($script:attributeSizeWarnings[$attr]/1024, 2)
+        Write-Host "  $attr : ${size}KB" -ForegroundColor Yellow
+    }
+    Write-Host "`nConsider adding large attributes to the excludedAttributes list if they are not needed for CII analysis." -ForegroundColor Yellow
+    Write-Host "Large attributes can slow down processing and may exceed API payload limits." -ForegroundColor Yellow
 }
 
 # Send a SCIM request to the CII service
@@ -1092,10 +1144,11 @@ if (-not $Preview) {
     }
 }
 
-$managerDNtoUPNCache = @{}      # Create a cache for DN to UPN mapping
-Initialize-ActiveDirectory      # Connect to Active Directory and initialize domain information
-Initialize-GroupSIDResolution   # Pre-resolve group SIDs (allows fast SID-based comparison)
-Process-Users                   # Process users in AD, classify and send to CII
+$managerDNtoUPNCache = @{}       # Create a cache for DN to UPN mapping
+Initialize-AttributeSizeWarnings # Initialize attribute size warning tracking
+Initialize-ActiveDirectory       # Connect to Active Directory and initialize domain information
+Initialize-GroupSIDResolution    # Pre-resolve group SIDs (allows fast SID-based comparison)
+Process-Users                    # Process users in AD, classify and send to CII
 
 Write-Log "AD Sync completed"
-
+Show-AttributeSizeSummary       # Show summary of large attributes if any were found
