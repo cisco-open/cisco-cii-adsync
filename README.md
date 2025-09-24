@@ -254,6 +254,21 @@ If you use a custom AD attribute to define you user roles it is also possible to
 > }
 > ```
 
+## Windows Task Scheduler
+
+To schedule the ADSync script using the Windows Task Scheduler, use 'Create Task' and specify a Domain user with sufficient permissions to read Active Directory.  It should not have to be a privileged account nor should you need to check the 'Run with highest privileges' option.  However, it must be a domain-joined account, not just a local server account.  Ensure the option 'Run whether user is logged on or not' is checked.
+
+In the 'Trigger' section, specify a frequency and time to run the script - we recommend daily (or less frequent) during a quiet time for most customers.  Set 'Recur  every 1 days' (or higher).  Ensure the 'Enabled' checkbox is checked.
+
+In the 'Action' section, set the 'Program/Script' name to 'powershell.exe'.  Set 'Start in (optional)' to the path where your script is located.  This folder must be writeable as the script will try to create the 'ADSync.log' file here.  Finally, set the 'Add arguments' to pass in the name of the ADSync script and its configuration files.  It may also be necessary to permit running unsigned powershell scripts using the '-ExecutionPolicy Bypass' parameter.
+
+Here is an example for the 'Add arguments' field:
+
+> ```-ExecutionPolicy Bypass -File "C:\ADSync\ADSync.ps1" -KeyFilePath .\cii-adsync-acme-encryption.key -ConfigFilePath .\cii-adsync-acme-encrypted-config.json```
+
+Finally, in the 'Settings' section, we recommend you set the 'If the task is already running' option to 'Stop the existing instance'.
+
+
 ## Protecting API Credentials
 
 Security is paramount. The script implements robust measures to protect your Cisco Identity Intelligence API credentials:
