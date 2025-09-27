@@ -352,12 +352,7 @@ function Get-PropertyString {
                         [Convert]::ToBase64String($value)
                     }
                     default {
-                        try {
-                            $stringValue = [System.Text.Encoding]::Default.GetString($value).TrimEnd([char]0)
-                            if ($stringValue) { $stringValue } else { [BitConverter]::ToString($value) -replace "-", "" }
-                        } catch {
-                            [BitConverter]::ToString($value) -replace "-", ""
-                        }
+                        [BitConverter]::ToString($value) -replace "-", ""
                     }
                 }
             }
