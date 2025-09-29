@@ -224,7 +224,15 @@ $script:excludedAttributes = @(
     "ntPwdHistory",
     "supplementalCredentials",
     "msDS-KeyCredentialLink",
-    "memberOf"
+    "memberOf",
+    "mS-DS-ConsistencyGuid",
+    "msExchMailboxGuid",
+    "msExchMailboxSecurityDescriptor",
+    "msExchMasterAccountSid",
+    "msMqDigests",
+    "terminalServer",
+    "protocolSettings",
+    "unixUserPassword"
 )
 
 <#
