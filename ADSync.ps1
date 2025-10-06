@@ -787,7 +787,8 @@ function ConvertTo-ScimUser {
             "urn:ietf:params:scim:schemas:extension:cisco:cii:ad"
         )
         userName    = $userName
-        externalId  = $adAttributes.objectGUID
+        # We set externalId to match Entra's immutableId, to promote user merging
+        externalId  = [Convert]::ToBase64String([Guid]::Parse($adAttributes.objectGUID).ToByteArray())
         displayName = $displayName
         active      = $active
         userType    = $userType
