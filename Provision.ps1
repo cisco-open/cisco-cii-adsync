@@ -98,17 +98,6 @@ function EnsureKeyFile($path) {
         $keyBytes = New-Object Byte[] 32
         [Security.Cryptography.RNGCryptoServiceProvider]::Create().GetBytes($keyBytes)
         $keyBytes | Set-Content -Path $path -Encoding Byte
-
-        # Secure the key file with restricted permissions
-        $acl = Get-Acl -Path $path
-        $acl.SetAccessRuleProtection($true, $false) # Disable inheritance
-        $rule = New-Object System.Security.AccessControl.FileSystemAccessRule("SYSTEM", "FullControl", "Allow")
-        $acl.SetAccessRule($rule)
-        $rule = New-Object System.Security.AccessControl.FileSystemAccessRule("Administrators", "FullControl", "Allow")
-        $acl.SetAccessRule($rule)
-        Set-Acl -Path $path -AclObject $acl
-
-        Write-Log "Key file secured with restricted permissions"
     }
 
     # Return the key
