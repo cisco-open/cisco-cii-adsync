@@ -9,6 +9,7 @@ This repository contains the open-source PowerShell script designed to integrate
 - [Installation and Setup](#installation-and-setup)
 - [Execution Instructions](#execution-instructions)
 - [Customization and Configuration](#customization-and-configuration)
+- [Windows Task Scheduler](#windows-task-scheduler)
 - [Protecting API Credentials](#protecting-api-credentials)
 - [Troubleshooting](#troubleshooting)
 - [Documentation](#documentation)
@@ -277,7 +278,6 @@ Security is paramount. The script implements robust measures to protect your Cis
 
 *   **One-time Provisioning**: Credentials are set up once using the CII AD `Provision` script and then encrypted.
 *   **Encryption**: Client ID and Secret are encrypted at rest within a machine-specific configuration file.
-*   **ACL Lock Down**: The key file containing encrypted credentials is secured with Access Control Lists (ACLs) to restrict unauthorized access.
 *   **Off-box Prevention**: The encrypted credentials cannot be used from a different machine, enhancing security by preventing simple file copying for compromise.
 
 ## Troubleshooting
@@ -295,7 +295,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
 *   **Preview Mode**: Utilize the preview mode (as described in Execution Instructions) to diagnose issues related to data collection, attribute filtering, or user classification without affecting your live CII environment. This allows you to inspect the data before it's sent.
 *   **Connectivity**: permit the server to contact the CII cloud service. 
-*   **Permissions**: Ensure the user account running the script has sufficient read permissions within Active Directory to access the necessary user and group objects.
+*   **Permissions**: Ensure the user account running the script has sufficient read permissions within Active Directory to access the necessary user and group objects.  When using Task Scheduler, if you see error 2147942402 (file not found) please check the account running the task has permissions to access the files.
 *   **Excessive Groups**: If you have an excessive number of groups, you can use the -NoGroups parameter to skip uploading these to CII.
 
 For more in-depth troubleshooting, refer to the official documentation or reach out to Cisco support.
