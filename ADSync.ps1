@@ -235,6 +235,9 @@ $script:excludedAttributes = @(
     "unixUserPassword"
 )
 
+# If empty, all security groups are processed. Otherwise, only these group names are.
+$script:specifiedGroups = @()
+
 <#
 =============================================================================
                     END OF CUSTOMER CUSTOMIZATION SECTION
@@ -863,11 +866,15 @@ function Get-UserGroupInfo {
         # Only resolve group names if not skipping
         if (-not $SkipGroupNames) {
             foreach ($sid in $tokenGroups) {
-                $groupEntry = @{
-                    sid  = $sid.Value
-                    name = Resolve-SID -sid $sid
+                $groupName = Resolve-SID -sid $sid
+                # If specifiedGroups is set, only include matching groups, else include all
+                if ($script:specifiedGroups.Count -eq 0 -or $script:specifiedGroups -contains $groupName) {
+                    $groupEntry = @{
+                        sid  = $sid.Value
+                        name = $groupName
+                    }
+                    $groups += $groupEntry
                 }
-                $groups += $groupEntry
             }
         }
     }
