@@ -296,7 +296,14 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 *   **Preview Mode**: Utilize the preview mode (as described in Execution Instructions) to diagnose issues related to data collection, attribute filtering, or user classification without affecting your live CII environment. This allows you to inspect the data before it's sent.
 *   **Connectivity**: permit the server to contact the CII cloud service. 
 *   **Permissions**: Ensure the user account running the script has sufficient read permissions within Active Directory to access the necessary user and group objects.  When using Task Scheduler, if you see error 2147942402 or 2147942401 please check the account running the task has permissions to access the files.
-*   **Excessive Groups**: If you have an excessive number of groups, you can use the -NoGroups parameter to skip uploading these to CII.
+*   **Excessive Groups**: If some users have an excessive number of groups, you can use the `specifiedGroups` configuration to define a subset of specific groups that should be uploaded to CII - see example below.  Alternatively, the `-NoGroups` parameter can be used to skip uploading any groups to CII although any Checks relating to groups will no longer work.
+```
+$script:includedGroups = @(
+    "Administrators",
+    "Domain Admins",
+    "Enterprise Admins"
+)
+```
 
 For more in-depth troubleshooting, refer to the official documentation or reach out to Cisco support.
 
