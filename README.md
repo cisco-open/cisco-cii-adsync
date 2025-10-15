@@ -115,11 +115,18 @@ Once installed and configured, you can run the CII `ADSync.ps1` script to collec
     Based on the preview output, you may want to customize what the script collects and classifies.  Refer to the _Customization and Configuration_ section below.
 
 3.  **Run the Sync Script**:
-    Once you have made any script customizations and are content with the data to be uploaded, execute the CII `ADSync.ps1` script. This will initiate the data collection from your Active Directory and its transfer to Cisco Identity Intelligence.
+    Once you have made any customizations and are content with the data to be uploaded, execute the CII `ADSync.ps1` script. This will initiate the data collection from your Active Directory and its transfer to Cisco Identity Intelligence.
 
 > ```powershell
+> # Without any customization file...
 > .\ADSync.ps1 -KeyFilePath .\your-encryption.key -ConfigFilePath .\your-encrypted-config.json
 > ```
+
+> ```powershell
+> # If you have a customization file...
+> .\ADSync.ps1 -KeyFilePath .\your-encryption.key -ConfigFilePath .\your-encrypted-config.json -CustomizationFilePath .\your-customizations.psd1 >
+> ```
+
 
 4.  **Scheduling**:
     For continuous visibility and up-to-date data, it is recommended to schedule the CII `ADSync.ps1` script to run periodically using Windows Task Scheduler or your preferred automation tool. The script is designed to be efficient and can be run alongside other scheduled scripts. We recommend running it once in 24 hours.
@@ -143,7 +150,11 @@ Once installed and configured, you can run the CII `ADSync.ps1` script to collec
 
 ## Customization and Configuration
 
-The CII `ADSync.ps1` script is highly customizable to fit your specific Active Directory environment and Cisco Identity Intelligence requirements. These configurations are made within the script file.
+The CII `ADSync.ps1` script is highly customizable to fit your specific Active Directory environment and Cisco Identity Intelligence requirements. These customizations are made in a separate PowerShell data file (`.psd1`).
+
+A sample customization file, `ADSync.Config.psd1`, is provided for you to customize with the options below.  ADSync has a default configuration so it is only necessary to define the items you want to customize.
+
+Available customizations:
 
 *   **Attribute Filtering**:
     You can configure which Active Directory attributes to exclude to control the data sent to CII. The script includes a list of excluded attributes where you can add any properties you do not wish to be collected.
@@ -151,7 +162,7 @@ The CII `ADSync.ps1` script is highly customizable to fit your specific Active D
     Futher, if you receive a warning about any large attributes they should be reviewed and potentially excluded.
 
 > ```powershell
-> $script:excludedAttributes = @(
+> excludedAttributes = @(
 >     "ntSecurityDescriptor",
 >     "userCertificate",
 >     "thumbnailPhoto",
@@ -172,7 +183,7 @@ The CII `ADSync.ps1` script is highly customizable to fit your specific Active D
     You can leave these classification rules blank if you do not wish to use them for a specific category. The script has a few default rules for common built-in groups.
 
 > ```powershell
-> $script:classificationRules = @{
+> classificationRules = @{
 >     # Define rules for service accounts
 >     isServiceAccount = @{
 >         # Groups       = @("Service Accounts", "SQL Service Accounts")
@@ -217,7 +228,7 @@ The CII `ADSync.ps1` script is highly customizable to fit your specific Active D
 If you use a custom AD attribute to define you user roles it is also possible to configure the script to use it and map its string values to CII user types.
 > ```powershell
 > # Custom AD attribute classification and CII userType mapping
-> $script:customAttributeMapping = @{
+> customAttributeMapping = @{
 >     # Specify the AD attribute name that contains classification values
 >     AttributeName = "yourCustomAttribute"  # e.g. "extensionAttribute1" or "customEmployeeType"
 >     # Map AD attribute values to CII userType values
@@ -241,21 +252,40 @@ If you use a custom AD attribute to define you user roles it is also possible to
 > ```
 
 *   **User Population - Rule Based**:
-    Alternatively, you can configure the `includeRules` and `excludeRules` in the script to either include or exclude users based on their OU membership or naming convention.
+    Alternatively, you can configure the `includeRules` and `excludeRules` in the script customization file to either include or exclude users based on their OU membership or naming convention.
  
 > ```powershell
 > # Include only users matching these criteria (empty = include all)
-> $script:includeRules = @{
+> includeRules = @{
 >     OUs          = @()  # e.g., @("OU=Active Users,DC=acme,DC=com")
 >     NamePatterns = @()  # e.g., @("emp_*", "contractor_*")
 > }
 > 
 > # Exclude users matching these criteria
-> $script:excludeRules = @{
+> excludeRules = @{
 >     OUs          = @("OU=Terminated,DC=acme,DC=com")
 >     NamePatterns = @("testuser*", "temp*")
 > }
 > ```
+
+*   **Selective Group Upload**:
+    By default, ADSync will try to upload all groups of each user to CII.  If you have a large number of security groups, many of which are not relevant to CII, you can instead define an explicit list of groups to be uploaded.
+> ```powershell
+> specifiedGroups = @(
+>     "Administrators",
+>     "Domain Admins",
+>     "Enterprise Admins",
+>     "Corporate Users",
+>     "External Guests"
+> )
+> ```
+
+To load your customization into ADSync, use the `-CustomizationFilePath` parameter and specify the name of the customization file.
+e.g.
+```powershell
+.\ADSync.ps1 -KeyFilePath .\your-encryption.key -ConfigFilePath .\your-encrypted-config.json -CustomizationFilePath .\ADSync.Config.psd1
+```
+
 
 ## Windows Task Scheduler
 
