@@ -1,4 +1,7 @@
 @{
+    # Example: Specify a domain controller to connect to (optional)
+    # domainController = "dc01.corp.example.com"
+
     # Example: Classification rules for user types
     # classificationRules = @{
     #     isServiceAccount = @{

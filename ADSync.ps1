@@ -546,9 +546,17 @@ function Initialize-ActiveDirectory {
         exit 1
     }
 
+    # Build LDAP connection string (optionally with specific domain controller)
+    if ($script:domainController) {
+        $ldapPath = "LDAP://$($script:domainController)/$script:domainDN"
+        Write-Log "Using specified domain controller: $script:domainController"
+    } else {
+        $ldapPath = "LDAP://$script:domainDN"
+    }
+
     # Create DirectoryEntry connection
     try {
-        $script:DirectoryEntry = New-Object System.DirectoryServices.DirectoryEntry("LDAP://$script:domainDN")
+        $script:DirectoryEntry = New-Object System.DirectoryServices.DirectoryEntry($ldapPath)
         $script:DirectoryEntry.RefreshCache()
         Write-Host "Connected to Active Directory: $script:domainDN" -ForegroundColor Green
     } catch {
