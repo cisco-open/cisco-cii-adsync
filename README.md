@@ -325,7 +325,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
 *   **Preview Mode**: Utilize the preview mode (as described in Execution Instructions) to diagnose issues related to data collection, attribute filtering, or user classification without affecting your live CII environment. This allows you to inspect the data before it's sent.
 *   **Connectivity**: permit the server to contact the CII cloud service. 
-*   **Permissions**: Ensure the user account running the script has sufficient read permissions within Active Directory to access the necessary user and group objects.  When using Task Scheduler, if you see error 2147942402 or 2147942401 please check the account running the task has permissions to access the files.
+*   **Permissions**: Ensure the user account running the script has sufficient read permissions within Active Directory to access the necessary user and group objects.  When using Task Scheduler, if you see error 2147942402 or 2147942401 please check the account running the task has permissions to access the files. The script uses the inherited user permissions when connecting to AD and if this does not have sufficient permissions you can use the `-LdapUser` and `-LdapPassword` parameters to provide alternative credentials.
 *   **Excessive Groups**: If some users have an excessive number of groups, you can use the `specifiedGroups` configuration to define a subset of specific groups that should be uploaded to CII - see example below.  Alternatively, the `-NoGroups` parameter can be used to skip uploading any groups to CII although any Checks relating to groups will no longer work.
 ```
 $script:includedGroups = @(

@@ -60,6 +60,11 @@
 
     Runs in preview mode, outputting processed user data to a JSON file without sending to CII.
 
+.EXAMPLE
+    .\ADSync.ps1 -KeyFilePath .\cisco-cii-AD-encryption.key -ConfigFilePath .\cisco-cii-AD-encrypted-config.json -LdapUsername "<bind_account>" -LdapPassword "<bind_password>"
+
+    Runs the AD sync operation using explicit LDAP credentials for the connection.
+
 .LINK
     https://docs.oort.io/integrations
 
@@ -101,6 +106,12 @@ param(
 
     [Parameter(Mandatory=$false, ParameterSetName = "Default", HelpMessage="Base DN to search for users (defaults to domain DN)")]
     [string]$BaseDN,
+
+    [Parameter(ParameterSetName = "Default", HelpMessage="LDAP bind username (optional)")]
+    [string]$LdapUsername,
+
+    [Parameter(ParameterSetName = "Default", HelpMessage="LDAP bind password (optional)")]
+    [string]$LdapPassword,
 
     [Parameter(ParameterSetName = "Default")]
     [switch]$Preview,
@@ -556,7 +567,12 @@ function Initialize-ActiveDirectory {
 
     # Create DirectoryEntry connection
     try {
-        $script:DirectoryEntry = New-Object System.DirectoryServices.DirectoryEntry($ldapPath)
+        if ($LdapUsername -and $LdapPassword) {
+            Write-Log "Using provided LDAP credentials for binding"
+            $script:DirectoryEntry = New-Object System.DirectoryServices.DirectoryEntry($ldapPath, $LdapUsername, $LdapPassword)
+        } else {
+            $script:DirectoryEntry = New-Object System.DirectoryServices.DirectoryEntry($ldapPath)
+        }
         $script:DirectoryEntry.RefreshCache()
         Write-Host "Connected to Active Directory: $script:domainDN" -ForegroundColor Green
     } catch {
