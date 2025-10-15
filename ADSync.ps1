@@ -13,6 +13,10 @@
 .PARAMETER ConfigFilePath
     Path to the encrypted configuration file containing SCIM endpoint and credentials.
 
+.PARAMETER CustomizationFilePath
+    (Optional) Path to a PowerShell data file containing customization rules and settings.
+    If not specified, the script will use built-in defaults.
+
 .PARAMETER BaseDN
     (Optional) Base DN to search for users. Defaults to the domain DN if not specified.
 
@@ -41,12 +45,18 @@
     (Optional) Size threshold in bytes for warning about large attributes. Set to 0 to disable warnings. Default: 2048.
 
 .EXAMPLE
-    .\ADSync.ps1 -KeyFilePath .\cisco-cii-AD-enryption.key -ConfigFilePath .\cisco-cii-AD-encrypted-config.json
+    .\ADSync.ps1 -KeyFilePath .\cisco-cii-AD-encryption.key -ConfigFilePath .\cisco-cii-AD-encrypted-config.json
 
     Runs the AD sync operation using the specified key and config files.
 
 .EXAMPLE
-    .\ADSync.ps1 -KeyFilePath cisco-cii-AD-enryption.key -ConfigFilePath cisco-cii-AD-encrypted-config.json -Preview
+    .\ADSync.ps1 -KeyFilePath .\cisco-cii-AD-encryption.key -ConfigFilePath .\cisco-cii-AD-encrypted-config.json -CustomizationFilePath .\ADSync.config.psd1
+
+    Runs the AD sync operation using the specified key, config, and a customer customization file.
+    The customization file allows you to define classification rules, excluded attributes, group filtering, and more.
+
+.EXAMPLE
+    .\ADSync.ps1 -KeyFilePath cisco-cii-AD-encryption.key -ConfigFilePath cisco-cii-AD-encrypted-config.json -Preview
 
     Runs in preview mode, outputting processed user data to a JSON file without sending to CII.
 
@@ -86,6 +96,9 @@ param(
     [ValidateScript({Test-Path $_ -PathType Leaf})]
     [string]$ConfigFilePath,
 
+    [Parameter(Mandatory=$false, ParameterSetName = "Default", HelpMessage="Path to the customer customization file")]
+    [string]$CustomizationFilePath,
+
     [Parameter(Mandatory=$false, ParameterSetName = "Default", HelpMessage="Base DN to search for users (defaults to domain DN)")]
     [string]$BaseDN,
 
@@ -123,126 +136,6 @@ if ($PSCmdlet.ParameterSetName -eq "Version") {
 }
 
 #requires -Module ActiveDirectory
-
-<#
-=============================================================================
-                   START OF CUSTOMER CUSTOMIZATION SECTION
-=============================================================================
-#>
-
-# Define user classification rules
-$script:classificationRules = @{
-    # Define rules for service accounts
-    isServiceAccount = @{
-        # Groups       = @("Service Accounts", "SQL Service Accounts")
-        Groups       = @()
-        # OUs          = @("OU=Service Accounts,DC=acme,DC=com")
-        OUs          = @()
-        # NamePatterns = @("svc_*", "sa_*")
-        NamePatterns = @()
-        # Usernames    = @("svc_special", "krbtgt")
-        Usernames    = @()
-    }
-    # Define rules for administrators
-    isAdmin = @{
-        Groups       = @("Domain Admins", "Enterprise Admins", "Administrators")
-        OUs          = @()
-        NamePatterns = @()
-        Usernames    = @("Administrator")
-    }
-    # Define rules for executives/special accounts
-    isExecutive = @{
-        # Groups       = @("Executives", "Board Members")
-        Groups       = @()
-        # OUs          = @("OU=Executive OU,DC=acme,DC=com")
-        OUs          = @()
-        NamePatterns = @()
-        # Usernames    = @("jbrown_svp", "asmith_cfo")
-        Usernames    = @()
-    }
-    # Define rules for external accounts
-    isExternalAccount = @{
-        # Groups       = @("External Users", "Partners", "Contractors")
-        Groups       = @()
-        # OUs          = @("OU=External,DC=acme,DC=com", "OU=Partners,DC=acme,DC=com")
-        OUs          = @()
-        # NamePatterns = @("ext_*", "*contractor*", "*partner*")
-        NamePatterns = @()
-        # Usernames    = @("vendor1", "consultant_jsmith")
-        Usernames    = @()
-    }
-}
-
-# Custom AD attribute classification and CII userType mapping
-$script:customAttributeMapping = @{
-    # Specify the AD attribute name that contains classification values
-    AttributeName = ""  # e.g. "extensionAttribute1" or "customEmployeeType"
-    # Map AD attribute values to CII userType values
-    ValueMappings = @{
-        # "user.employee.regular" = "employee"
-        # "user.admin.web"        = "admin"
-        # "user.admin.domain"     = "admin"
-        # "user.service.app"      = "service"
-        # "user.contractor"       = "external"
-        # "user.executive"        = "executive"
-    }
-    # Default userType if attribute value doesn't match any mapping
-    DefaultUserType = "employee"
-}
-
-# Include users in these OUs or with specific naming conventions
-$script:includeRules = @{
-    OUs          = @()
-    NamePatterns = @()
-}
-# Exclude users in these OUs or with specific naming conventions
-$script:excludeRules = @{
-    # OUs          = @("OU=Terminated,DC=acme,DC=com")
-    OUs          = @()
-    # NamePatterns = @("testuser*", "temp*")
-    NamePatterns = @()
-}
-
-# Customize attributes to exclude
-$script:excludedAttributes = @(
-    "ntSecurityDescriptor",
-    "PropertyNames",
-    "userCertificate",
-    "thumbnailPhoto",
-    "msPKIAccountCredentials",
-    "msExchSafeSendersHash",
-    "msExchSafeRecipientsHash",
-    "msPKIDPAPIMasterKey",
-    "msExchBlockedSendersHash",
-    "msExchUMDtmfMap",
-    "msExchUMSpokenName",
-    "logonHours",
-    "userParameters",
-    "unicodePwd",
-    "dBCSPwd",
-    "lmPwdHistory",
-    "ntPwdHistory",
-    "supplementalCredentials",
-    "msDS-KeyCredentialLink",
-    "memberOf",
-    "mS-DS-ConsistencyGuid",
-    "msExchMailboxGuid",
-    "msExchMailboxSecurityDescriptor",
-    "msExchMasterAccountSid",
-    "msMqDigests",
-    "terminalServer",
-    "protocolSettings",
-    "unixUserPassword"
-)
-
-# If empty, all security groups are processed. Otherwise, only these group names are.
-$script:specifiedGroups = @()
-
-<#
-=============================================================================
-                    END OF CUSTOMER CUSTOMIZATION SECTION
-=============================================================================
-#>
 
 # Mandatory attributes that cannot be excluded (required for functionality)
 $script:mandatoryAttributes = @(
@@ -303,6 +196,161 @@ function Show-Progress {
     }
     $detailedStatus = "$Status ($Count/$Total) | Processed: $ProcessedCount, Skipped: $SkippedCount | ETA: $eta | Rate: $rate/sec"
     Write-Progress -Activity $Activity -Status $detailedStatus -PercentComplete $percentComplete
+}
+
+# Function to load customer customization settings
+function Load-CustomerCustomization {
+    param (
+        [string]$CustomizationPath = $script:CustomizationFilePath
+    )
+    # First initialize all default settings
+    Initialize-DefaultCustomization
+
+    # If no path provided, use defaults without warning
+    if ([string]::IsNullOrWhiteSpace($CustomizationPath)) {
+        Write-Log "No customization file specified, using default settings"
+        return
+    }
+
+    # Check if customization file exists
+    if (-not (Test-Path -Path $CustomizationPath)) {
+        Write-Error "Customization file not found: $CustomizationPath"
+        Write-Log "ERROR: Customization file not found: $CustomizationPath"
+        exit 1
+    }
+
+    try {
+        # Load customer customization file to override default settings
+        Write-Log "Loading customization file: $CustomizationPath"
+        $config = Import-PowerShellDataFile -Path $CustomizationPath
+        Apply-CustomConfiguration -ConfigData $config
+        Write-Status "Loaded customization file: $CustomizationPath"
+    } catch {
+        Write-Error "Error loading customization file: $_"
+        Write-Log "ERROR: Failed to load customization file: $_"
+        exit 1
+    }
+}
+
+function Apply-CustomConfiguration {
+    param (
+        [hashtable]$ConfigData
+    )
+    # Apply each section of configuration if present
+    if ($ConfigData.classificationRules) {
+        foreach ($key in $ConfigData.classificationRules.Keys) {
+            if ($script:classificationRules.ContainsKey($key)) {
+                foreach ($ruleType in $ConfigData.classificationRules[$key].Keys) {
+                    $script:classificationRules[$key][$ruleType] = $ConfigData.classificationRules[$key][$ruleType]
+                }
+            }
+        }
+    }
+    if ($ConfigData.customAttributeMapping) {
+        $script:customAttributeMapping = $ConfigData.customAttributeMapping
+    }
+    if ($ConfigData.includeRules) {
+        $script:includeRules = $ConfigData.includeRules
+    }
+    if ($ConfigData.excludeRules) {
+        $script:excludeRules = $ConfigData.excludeRules
+    }
+    if ($ConfigData.excludedAttributes) {
+        $script:excludedAttributes = $ConfigData.excludedAttributes
+    }
+}
+
+# Initialize default customization settings
+function Initialize-DefaultCustomization {
+    Write-Log "Initializing default customization settings"
+    # Define user classification rules
+    $script:classificationRules = @{
+        # Define rules for service accounts
+        isServiceAccount = @{
+            Groups       = @()
+            OUs          = @()
+            NamePatterns = @()
+            Usernames    = @()
+        }
+        # Define rules for administrators
+        isAdmin = @{
+            Groups       = @("Domain Admins", "Enterprise Admins", "Administrators")
+            OUs          = @()
+            NamePatterns = @()
+            Usernames    = @("Administrator")
+        }
+        # Define rules for executives/special accounts
+        isExecutive = @{
+            Groups       = @()
+            OUs          = @()
+            NamePatterns = @()
+            Usernames    = @()
+        }
+        # Define rules for external accounts
+        isExternalAccount = @{
+            Groups       = @()
+            OUs          = @()
+            NamePatterns = @()
+            Usernames    = @("Guest")
+        }
+    }
+
+    # Custom AD attribute classification and CII userType mapping
+    $script:customAttributeMapping = @{
+        # Specify the AD attribute name that contains classification values
+        AttributeName = ""
+        # Map AD attribute values to CII userType values
+        ValueMappings = @{}
+        # Default userType if attribute value doesn't match any mapping
+        DefaultUserType = "employee"
+    }
+
+    # Include users in these OUs or with specific naming conventions
+    $script:includeRules = @{
+        OUs          = @()
+        NamePatterns = @()
+    }
+
+    # Exclude users in these OUs or with specific naming conventions
+    $script:excludeRules = @{
+        OUs          = @()
+        NamePatterns = @()
+    }
+
+    # Customize attributes to exclude
+    $script:excludedAttributes = @(
+        "ntSecurityDescriptor",
+        "PropertyNames",
+        "userCertificate",
+        "thumbnailPhoto",
+        "msPKIAccountCredentials",
+        "msExchSafeSendersHash",
+        "msExchSafeRecipientsHash",
+        "msPKIDPAPIMasterKey",
+        "msExchBlockedSendersHash",
+        "msExchUMDtmfMap",
+        "msExchUMSpokenName",
+        "logonHours",
+        "userParameters",
+        "unicodePwd",
+        "dBCSPwd",
+        "lmPwdHistory",
+        "ntPwdHistory",
+        "supplementalCredentials",
+        "msDS-KeyCredentialLink",
+        "memberOf",
+        "mS-DS-ConsistencyGuid",
+        "msExchMailboxGuid",
+        "msExchMailboxSecurityDescriptor",
+        "msExchMasterAccountSid",
+        "msMqDigests",
+        "terminalServer",
+        "protocolSettings",
+        "unixUserPassword"
+    )
+
+    # If empty, all security groups are processed. Otherwise, only these group names are.
+    $script:specifiedGroups = @()
 }
 
 # Get AD domain name
@@ -1145,6 +1193,7 @@ function Process-Users {
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls13
 
 Initialize-OutputFiles          # Initialize log and preview files
+Load-CustomerCustomization      # Load customer customization settings
 
 # Get auth token using the provided key and config file (skip if preview mode)
 if (-not $Preview) {
