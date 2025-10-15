@@ -269,6 +269,12 @@ function Apply-CustomConfiguration {
     if ($ConfigData.excludedAttributes) {
         $script:excludedAttributes = $ConfigData.excludedAttributes
     }
+    if ($ConfigData.specifiedGroups) {
+        $script:specifiedGroups = $ConfigData.specifiedGroups
+    } 
+    if ($ConfigData.domainController) {
+        $script:domainController = $ConfigData.domainController
+    }
 }
 
 # Initialize default customization settings
