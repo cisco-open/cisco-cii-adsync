@@ -173,7 +173,7 @@ Available customizations:
 > ```
 
 *   **User Classification Rules**:
-    You can define rules within the script to classify users *before* ingestion into Cisco Identity Intelligence. This allows you to categorize users as Service Accounts, Admins, or Special Accounts (Executives). You can configure these classifications using four methods:
+    You can define rules within the script to classify users *before* ingestion into Cisco Identity Intelligence. This allows you to categorize users as External, Service Accounts, Admins, or Special Accounts (Executives). You can configure these classifications using four methods:
 
     1.  **Active Directory Group Membership**: Classify users based on their membership in specific AD groups.
     2.  **Organizational Unit (OU) Membership**: Classify users based on the Organizational Unit they reside in. 
