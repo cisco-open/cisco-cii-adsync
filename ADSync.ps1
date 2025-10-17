@@ -139,6 +139,8 @@ param(
 )
 
 $ScriptVersion = "1.0"
+$SCIM_OPERATION_SIZE_LIMIT = 1048576
+$script:payloadTooLargeDetected = $false
 
 # Handle version parameter set
 if ($PSCmdlet.ParameterSetName -eq "Version") {
@@ -696,6 +698,11 @@ function Check-AttributeSize {
 
 # Show summary of large attributes found during processing
 function Show-AttributeSizeSummary {
+    if ($script:payloadTooLargeDetected) {
+        Write-Host "`n=== Large User Warning ===" -ForegroundColor Yellow
+        Write-Host "One or more users were not uploaded because their data was too large." -ForegroundColor Yellow
+        Write-Host "Use Preview mode to identity the large attributes and adjust your excludedAttributes or specifiedGroups settings in your customization file." -ForegroundColor Yellow
+    }
     if (-not $script:attributeSizeWarnings -or $script:attributeSizeWarnings.Count -eq 0) {
         return
     }
@@ -905,12 +912,23 @@ function Send-BatchOfUsers {
     } else {
         $bulkOperations = @()
         foreach ($userObject in $UserBatch) {
-            $bulkOperations += @{
+            $scimData = ConvertTo-ScimUser -UserObject $userObject -groups $userObject.groups
+            $operation = @{
                 method = "POST"
                 path = "/Users"
                 bulkId = $userObject.adAttributes.objectGUID
-                data = ConvertTo-ScimUser -UserObject $userObject -groups $userObject.groups
+                data = $scimData
             }
+            # Check operation size
+            $opJson = $operation | ConvertTo-Json -Depth 10
+            $opSize = [System.Text.Encoding]::UTF8.GetByteCount($opJson)
+            if ($opSize -gt $SCIM_OPERATION_SIZE_LIMIT) {
+                Write-Warning "Payload for user $($userObject.adAttributes.samAccountName) is too large and will be skipped."
+                Write-Log "Payload for user $($userObject.adAttributes.samAccountName) too large ($opSize bytes) and will be skipped."
+                $script:payloadTooLargeDetected = $true
+                continue
+            }
+            $bulkOperations += $operation
         }
         if ($ScimPreview) {
             $bulkPayload = @{
