@@ -728,10 +728,12 @@ function Send-ScimBulkRequest {
     }
     $headers = @{
         "Authorization" = "Bearer $script:bearerToken"
-        "Content-Type" = "application/scim+json"
+        "Content-Type" = "application/scim+json; charset=utf-8"
     }
     try {
-        $response = Invoke-RestMethod -Uri $script:scimUrl -Method POST -Headers $headers -Body ($bulkRequest | ConvertTo-Json -Depth 10)
+        # Serialize once (Compressed keeps Unicode characters intact; PowerShell does not escape them)
+        $json = $bulkRequest | ConvertTo-Json -Depth 10 -Compress
+        $response = Invoke-RestMethod -Uri $script:scimUrl -Method POST -Headers $headers -Body ([System.Text.Encoding]::UTF8.GetBytes($json))
         # Check if any operation failed
         if ($response.Operations) {
             $failedOps = $response.Operations | Where-Object { $_.status -ne "201" }
@@ -1081,6 +1083,15 @@ function Get-CIIAttributes {
     }
     if ($adAttributes.badPasswordTime -gt 0) {
         $ciiAttributes["isoBadPasswordTime"] = [DateTime]::FromFileTimeUtc($adAttributes.badPasswordTime).ToString("o")
+    }
+    if ($adAttributes.lockoutTime -gt 0) {
+        $ciiAttributes["isoLockoutTime"] = [DateTime]::FromFileTimeUtc($adAttributes.lockoutTime).ToString("o")
+    }
+    if ($adAttributes.accountExpires -ne $null) {
+        $expiresVal = [int64]$adAttributes.accountExpires
+        if ($expiresVal -gt 0 -and $expiresVal -ne 0x7FFFFFFFFFFFFFFF) {
+            $ciiAttributes["isoAccountExpiry"] = [DateTime]::FromFileTimeUtc($adAttributes.accountExpires).ToString("o")
+        }
     }
 
     return $ciiAttributes
