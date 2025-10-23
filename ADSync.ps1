@@ -1074,13 +1074,13 @@ function Get-CIIAttributes {
         $ciiAttributes["isoLastModified"] = $adAttributes.whenChanged
     }
     if ($adAttributes.lastLogon -gt 0) {
-        $ciiAttributes["isoLastSuccessfulLogin"] = [DateTime]::FromFileTime($adAttributes.lastLogon).ToString("o")
+        $ciiAttributes["isoLastSuccessfulLogin"] = [DateTime]::FromFileTimeUtc($adAttributes.lastLogon).ToString("o")
     }
     if ($adAttributes.pwdLastSet -gt 0) {
-        $ciiAttributes["isoLastPasswordChange"] = [DateTime]::FromFileTime($adAttributes.pwdLastSet).ToString("o")
+        $ciiAttributes["isoLastPasswordChange"] = [DateTime]::FromFileTimeUtc($adAttributes.pwdLastSet).ToString("o")
     }
     if ($adAttributes.badPasswordTime -gt 0) {
-        $ciiAttributes["isoBadPasswordTime"] = [DateTime]::FromFileTime($adAttributes.badPasswordTime).ToString("o")
+        $ciiAttributes["isoBadPasswordTime"] = [DateTime]::FromFileTimeUtc($adAttributes.badPasswordTime).ToString("o")
     }
 
     return $ciiAttributes
