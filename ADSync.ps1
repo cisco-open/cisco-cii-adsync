@@ -1097,6 +1097,28 @@ function Get-CIIAttributes {
     return $ciiAttributes
 }
 
+# Function to read encryption key bytes from file
+function Get-EncryptionKeyBytes {
+    param([string]$KeyFilePath)
+    if ([string]::IsNullOrWhiteSpace($KeyFilePath)) {
+        Write-Error "KeyFilePath is empty."
+        exit 1
+    }
+    if (-not [IO.Path]::IsPathRooted($KeyFilePath)) {
+        $KeyFilePath = Join-Path $PSScriptRoot $KeyFilePath
+    }
+    if (-not (Test-Path -LiteralPath $KeyFilePath -PathType Leaf)) {
+        Write-Error "Encryption key file not found: $KeyFilePath"
+        exit 1
+    }
+    try {
+        return [IO.File]::ReadAllBytes($KeyFilePath)
+    } catch {
+        Write-Error "Failed to read encryption key file: $KeyFilePath ($_)"
+        exit 1
+    }
+}
+
 # Function to decrypt encrypted config values using the key
 function Decrypt-Value {
     param(
@@ -1128,7 +1150,7 @@ function Get-BearerToken {
         Write-Log "Using SCIM endpoint: $script:scimUrl"
 
         # Load the encryption key
-        $keyBytes = Get-Content -Path $KeyFilePath -Encoding Byte
+        $keyBytes = Get-EncryptionKeyBytes -KeyFilePath $KeyFilePath
 
         # Extract token endpoint
         $tokenEndpoint = $config.TokenEndpoint

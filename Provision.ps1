@@ -92,16 +92,23 @@ function Write-Status {
 
 # Function to ensure we have a valid key file
 function EnsureKeyFile($path) {
-    if (-not (Test-Path $path)) {
-        Write-Log "Creating new encryption key file at $path"
-        # Generate a secure 32-byte key
-        $keyBytes = New-Object Byte[] 32
-        [Security.Cryptography.RNGCryptoServiceProvider]::Create().GetBytes($keyBytes)
-        $keyBytes | Set-Content -Path $path -Encoding Byte
+    try {
+        $fullPath = Join-Path $PSScriptRoot $path
+        if (-not (Test-Path $path)) {
+            Write-Log "Creating new encryption key file at $path"
+            # Generate a secure 32-byte key
+            $keyBytes = New-Object Byte[] 32
+            [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($keyBytes)
+            [System.IO.File]::WriteAllBytes($fullPath, $keyBytes)
+            Write-Log "Encryption key file created at $path"
+        }
+        # Return the key
+        return [System.IO.File]::ReadAllBytes($fullPath)
+    } catch {
+        Write-Error "Failed to create or read key file: $_"
+        Write-Log "Failed to create or read key file: $_"
+        exit 1
     }
-
-    # Return the key
-    return Get-Content -Path $path -Encoding Byte
 }
 
 # Encrypt a value using the key
@@ -115,6 +122,28 @@ function DecryptValue($encryptedString, $keyBytes) {
     $secure = ConvertTo-SecureString $encryptedString -Key $keyBytes
     $bstr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
     return [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($bstr)
+}
+
+# Function to read encryption key bytes from file
+function Get-EncryptionKeyBytes {
+    param([string]$KeyFilePath)
+    if ([string]::IsNullOrWhiteSpace($KeyFilePath)) {
+        Write-Error "KeyFilePath is empty."
+        exit 1
+    }
+    if (-not [IO.Path]::IsPathRooted($KeyFilePath)) {
+        $KeyFilePath = Join-Path $PSScriptRoot $KeyFilePath
+    }
+    if (-not (Test-Path -LiteralPath $KeyFilePath -PathType Leaf)) {
+        Write-Error "Encryption key file not found: $KeyFilePath"
+        exit 1
+    }
+    try {
+        return [IO.File]::ReadAllBytes($KeyFilePath)
+    } catch {
+        Write-Error "Failed to read encryption key file: $KeyFilePath ($_)"
+        exit 1
+    }
 }
 
 # Validate the structure of the input config file
@@ -319,13 +348,14 @@ try {
     $loadedJson = Get-Content $OutputConfigPath -Raw
     $loadedConfig = $loadedJson | ConvertFrom-Json
 
-    # Get the key file path and load the key
+    # Get the key file path
     $loadedKeyPath = $loadedConfig.EncryptionKeyFile
     if (-not (Test-Path $loadedKeyPath)) {
         Write-Log "Key file not found at: $loadedKeyPath"
         throw "Key file not found at: $loadedKeyPath"
     }
-    $loadedKey = Get-Content -Path $loadedKeyPath -Encoding Byte
+    # Load the encryption key
+    $loadedKey = Get-EncryptionKeyBytes -KeyFilePath $loadedKeyPath
 
     # Decrypt the values
     $decryptedClientId = DecryptValue -encryptedString $loadedConfig.ClientId.Value -keyBytes $loadedKey
@@ -349,6 +379,7 @@ try {
 } catch {
     Write-Log "Failed to test decryption: $_"
     Write-Status "Failed to verify config! See log for details." -Color Red
+    exit 1
 }
 
 Write-Progress -Activity "Validating" -Status "Configuration looks good" -PercentComplete 100
