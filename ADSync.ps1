@@ -362,7 +362,8 @@ function Initialize-DefaultCustomization {
         "msExchMailboxGuid",
         "msExchMailboxSecurityDescriptor",
         "msExchMasterAccountSid",
-        "msMqDigests",
+        "mSMQSignCertificates",
+        "mSMQDigests",
         "terminalServer",
         "protocolSettings",
         "unixUserPassword"
