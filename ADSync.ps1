@@ -582,19 +582,19 @@ function Initialize-ActiveDirectory {
             $script:DirectoryEntry = New-Object System.DirectoryServices.DirectoryEntry($ldapPath)
         }
         $script:DirectoryEntry.RefreshCache()
-        Write-Host "Connected to Active Directory: $script:domainDN" -ForegroundColor Green
+        Write-Status "Connected to Active Directory: $script:domainDN" -ForegroundColor Green
     } catch {
-        Write-Host "Failed to connect to Active Directory: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Status "Failed to connect to Active Directory: $($_.Exception.Message)" -ForegroundColor Red
         exit 1
     }
 
     # Show user count for the search base
     if ($BaseDN) {
         $script:TotalUsers = Get-ADUserCount -SearchBase $BaseDN
-        Write-Host "There are $script:TotalUsers users in the specified search base: $BaseDN"
+        Write-Status "There are $script:TotalUsers users in the specified search base: $BaseDN"
     } else {
         $script:TotalUsers = Get-ADUserCount
-        Write-Host "There are $script:TotalUsers users in this domain"
+        Write-Status "There are $script:TotalUsers users in this domain"
     }
 }
 
