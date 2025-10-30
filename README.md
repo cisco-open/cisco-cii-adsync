@@ -280,6 +280,11 @@ If you use a custom AD attribute to define you user roles it is also possible to
 > )
 > ```
 
+*   **Owner Attribute**:
+    If you use an attribute in your NHI accounts to indicate who is responsible for that account, you can define it here.
+>```powershell
+>accountOwnerAttribute = "extensionAttribute2"
+
 To load your customization into ADSync, use the `-CustomizationFilePath` parameter and specify the name of the customization file.
 e.g.
 ```powershell

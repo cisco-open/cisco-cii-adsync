@@ -77,6 +77,10 @@
     #     DefaultUserType = "employee"
     # }
 
+    # Example: Specify the attribute that refers to the person responsible for an account
+    # This is useful where NHI accounts are managed by someone else.
+    # accountOwnerAttribute = "extensionAttribute2"
+
     # Example: Include/exclude rules
     # includeRules = @{
     #     OUs          = @("OU=Active Users,DC=example,DC=com")

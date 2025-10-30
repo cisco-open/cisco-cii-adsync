@@ -277,6 +277,9 @@ function Apply-CustomConfiguration {
     if ($ConfigData.domainController) {
         $script:domainController = $ConfigData.domainController
     }
+    if ($ConfigData.accountOwnerAttribute) {
+        $script:accountOwnerAttribute = $ConfigData.accountOwnerAttribute
+    }
 }
 
 # Initialize default customization settings
@@ -323,6 +326,9 @@ function Initialize-DefaultCustomization {
         # Default userType if attribute value doesn't match any mapping
         DefaultUserType = "employee"
     }
+
+    # Account owner (responsible user) custom attribute (empty means disabled)
+    $script:accountOwnerAttribute = ""
 
     # Include users in these OUs or with specific naming conventions
     $script:includeRules = @{
@@ -1151,6 +1157,12 @@ function Get-CIIAttributes {
         if ($val -gt 0 -and $val -ne 0x7FFFFFFFFFFFFFFF) {
             $ciiAttributes["isoAccountExpiry"] = Convert-FileTimeUtc $val
         }
+    }
+
+    # Add accountOwner if configured and present
+    if ($script:accountOwnerAttribute) {
+        $val = $adAttributes[$script:accountOwnerAttribute]
+        if ($val) { $ciiAttributes["accountOwner"] = $val }
     }
     return $ciiAttributes
 }
