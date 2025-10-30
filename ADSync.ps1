@@ -579,11 +579,35 @@ function Initialize-GroupSIDResolution {
     }
 }
 
+# Check if required AD ports are reachable on the domain controller
+function Check-ADPorts {
+    param([string]$DomainController)
+    if ([string]::IsNullOrWhiteSpace($DomainController)) { return }
+    $ports = @(
+        @{ Port = 389;  Name = "LDAP";     Required = $true  }
+        @{ Port = 88;   Name = "Kerberos"; Required = $true  }
+        @{ Port = 9389; Name = "ADWS";     Required = $true  }
+        @{ Port = 3268; Name = "GC";       Required = $false }
+    )
+    foreach ($p in $ports) {
+        $result = Test-NetConnection -ComputerName $DomainController -Port $p.Port -WarningAction SilentlyContinue
+        $ok = ($result.TcpTestSucceeded -eq $true)
+        Write-Log "Port $($p.Port) $($p.Name) reachable: $ok"
+        if (-not $ok -and $p.Required) {
+            Write-Warning "Required AD port $($p.Port) ($($p.Name)) may not reachable on $DomainController"
+        }
+    }
+}
+
 # Function to initialize Active Directory connection and domain information
 function Initialize-ActiveDirectory {
     # Determine current Active Directory domain
     $script:domainDNS = (Get-ADDomain).DNSRoot
     Write-Log "Detected AD domain: $script:domainDNS"
+
+    # Check connectivity to a domain controller
+    $dc = (Get-ADDomainController -Discover -Writable -ErrorAction Stop).HostName
+    Check-ADPorts -DomainController $dc
 
     # Determine search base DN
     if (-not $BaseDN) {
