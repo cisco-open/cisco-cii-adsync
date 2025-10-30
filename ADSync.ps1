@@ -372,6 +372,29 @@ function Initialize-DefaultCustomization {
     $script:specifiedGroups = @()
 }
 
+# Convert Generalized time to ISO 8601 UTC
+function Convert-GeneralizedTimeUtc {
+    param([string]$Value)
+    if ([string]::IsNullOrWhiteSpace($Value)) { return $null }
+    try {
+        return ([DateTime]::Parse($Value)).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+    } catch { return $null }
+}
+
+# Convert FILETIME to ISO 8601 UTC
+function Convert-FileTimeUtc {
+    param([object]$Value)
+    if ($null -eq $Value) { return $null }
+    # Accept numeric or numeric string
+    try {
+        $fileTime = [int64]$Value
+    } catch { return $null }
+    if ($fileTime -le 0) { return $null }
+    try {
+        return [DateTime]::FromFileTimeUtc($fileTime).ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+    } catch { return $null }
+}
+
 # Get AD domain name
 function Get-ADDomainName {
     try {
@@ -1070,30 +1093,31 @@ function Get-CIIAttributes {
     }
 
     if ($adAttributes.whenCreated -ne $null) {
-        $ciiAttributes["isoCreated"] = $adAttributes.whenCreated
+        $val = Convert-GeneralizedTimeUtc $adAttributes.whenCreated
+        if ($val) { $ciiAttributes["isoCreated"] = $val }
     }
     if ($adAttributes.whenChanged -ne $null) {
-        $ciiAttributes["isoLastModified"] = $adAttributes.whenChanged
+        $val = Convert-GeneralizedTimeUtc $adAttributes.whenChanged
+        if ($val) { $ciiAttributes["isoLastModified"] = $val }
     }
-    if ($adAttributes.lastLogon -gt 0) {
-        $ciiAttributes["isoLastSuccessfulLogin"] = [DateTime]::FromFileTimeUtc($adAttributes.lastLogon).ToString("o")
-    }
-    if ($adAttributes.pwdLastSet -gt 0) {
-        $ciiAttributes["isoLastPasswordChange"] = [DateTime]::FromFileTimeUtc($adAttributes.pwdLastSet).ToString("o")
-    }
-    if ($adAttributes.badPasswordTime -gt 0) {
-        $ciiAttributes["isoBadPasswordTime"] = [DateTime]::FromFileTimeUtc($adAttributes.badPasswordTime).ToString("o")
-    }
-    if ($adAttributes.lockoutTime -gt 0) {
-        $ciiAttributes["isoLockoutTime"] = [DateTime]::FromFileTimeUtc($adAttributes.lockoutTime).ToString("o")
-    }
+    $val = Convert-FileTimeUtc $adAttributes.lastLogon
+    if ($val) { $ciiAttributes["isoLastSuccessfulLogin"] = $val }
+
+    $val = Convert-FileTimeUtc $adAttributes.pwdLastSet
+    if ($val) { $ciiAttributes["isoLastPasswordChange"] = $val }
+
+    $val = Convert-FileTimeUtc $adAttributes.badPasswordTime
+    if ($val) { $ciiAttributes["isoBadPasswordTime"] = $val }
+
+    $val = Convert-FileTimeUtc $adAttributes.lockoutTime
+    if ($val) { $ciiAttributes["isoLockoutTime"] = $val }
+
     if ($adAttributes.accountExpires -ne $null) {
-        $expiresVal = [int64]$adAttributes.accountExpires
-        if ($expiresVal -gt 0 -and $expiresVal -ne 0x7FFFFFFFFFFFFFFF) {
-            $ciiAttributes["isoAccountExpiry"] = [DateTime]::FromFileTimeUtc($adAttributes.accountExpires).ToString("o")
+        $val = [int64]$adAttributes.accountExpires
+        if ($val -gt 0 -and $val -ne 0x7FFFFFFFFFFFFFFF) {
+            $ciiAttributes["isoAccountExpiry"] = Convert-FileTimeUtc $val
         }
     }
-
     return $ciiAttributes
 }
 
