@@ -500,24 +500,33 @@ function Get-ADAttributes {
 # Resolve SID to friendly name, including well-known SIDs
 function Resolve-SID {
     param ([System.Security.Principal.SecurityIdentifier]$sid)
+    if ($null -eq $sid) { return $null }
+    $key = $sid.Value
+    if ($script:sidToNameCache.ContainsKey($key)) {
+        return $script:sidToNameCache[$key]
+    }
+    $resolved = $null
     try {
         # Try to translate to NTAccount (DOMAIN\Group)
-        return $sid.Translate([System.Security.Principal.NTAccount]).Value.Split('\')[-1]
+        $resolved = $sid.Translate([System.Security.Principal.NTAccount]).Value.Split('\')[-1]
     } catch {
         # Try to match against well-known SID types
         foreach ($sidType in [System.Enum]::GetValues([System.Security.Principal.WellKnownSidType])) {
             try {
                 $wellKnownSid = New-Object System.Security.Principal.SecurityIdentifier($sidType, $null)
                 if ($sid -eq $wellKnownSid) {
-                    return $sidType.ToString()
+                    $resolved = $sidType.ToString()
+                    break
                 }
             } catch {
                 continue
             }
         }
         # Fallback: return raw SID string
-        return $sid.Value
+        if (-not $resolved) { $resolved = $sid.Value }
     }
+    $script:sidToNameCache[$key] = $resolved
+    return $resolved
 }
 
 # Function to initialize output files (log and preview files)
@@ -1311,6 +1320,7 @@ if (-not $Preview) {
 }
 
 $managerDNtoUPNCache = @{}       # Create a cache for DN to UPN mapping
+$script:sidToNameCache = @{}     # Create a cache for SID to name mapping
 Initialize-AttributeSizeWarnings # Initialize attribute size warning tracking
 Initialize-ActiveDirectory       # Connect to Active Directory and initialize domain information
 Initialize-GroupSIDResolution    # Pre-resolve group SIDs (allows fast SID-based comparison)
