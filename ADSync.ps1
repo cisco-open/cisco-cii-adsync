@@ -682,13 +682,19 @@ function Get-UPNFromDN {
             $DNtoUPNCache[$DistinguishedName] = $user.UserPrincipalName
             return $user.UserPrincipalName
         }
-        else {
-            Write-Warning "Could not find UPN for: $DistinguishedName"
-            return $null
+        if ($user.SamAccountName -and $script:domainDNS) {
+            $implicitUpn = "$($user.SamAccountName)@$script:domainDNS"
+            $DNtoUPNCache[$DistinguishedName] = $implicitUpn
+            Write-Status "Implicit UPN fallback used for DN '$DistinguishedName': $implicitUpn"
+            return $implicitUpn
         }
+        Write-Warning "Could not find explicit or implicit UPN for: $DistinguishedName"
+        $DNtoUPNCache[$DistinguishedName] = $null
+        return $null
     }
     catch {
         Write-Warning "Error looking up UPN for DN: $_"
+        $DNtoUPNCache[$DistinguishedName] = $null
         return $null
     }
 }
