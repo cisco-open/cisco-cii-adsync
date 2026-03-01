@@ -931,16 +931,19 @@ function ConvertTo-ScimUser {
     }
 
     # userType
-    $userType = if ($ciiAttributes.isAdmin) {
-        "admin"
-    } elseif ($ciiAttributes.isServiceAccount) {
+    $classificationMatches = @()
+    if ($ciiAttributes.isAdmin) { $classificationMatches += "admin" }
+    if ($adAttributes.samAccountName -eq "Guest" -or $ciiAttributes.isExternalAccount) {
+        $classificationMatches += "external"
+    }
+    if ($ciiAttributes.isExecutive) { $classificationMatches += "executive" }
+
+    $userType = if ($ciiAttributes.isServiceAccount) {
         "service"
-    } elseif ($adAttributes.samAccountName -eq "Guest") {
-        "guest"
-    } elseif ($ciiAttributes.isExecutive) {
-        "executive"
-    } elseif ($ciiAttributes.isExternalAccount) {
-        "external"
+    } elseif ($classificationMatches.Count -gt 1) {
+        "inconsistent"
+    } elseif ($classificationMatches.Count -eq 1) {
+        $classificationMatches[0]
     } else {
         "employee"
     }
