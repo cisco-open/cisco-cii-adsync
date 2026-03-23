@@ -291,7 +291,7 @@ e.g.
 
 ## Windows Task Scheduler
 
-To schedule the ADSync script using the Windows Task Scheduler, use 'Create Task' and specify a Domain user with sufficient permissions to read Active Directory.  It should not have to be a privileged account nor should you need to check the 'Run with highest privileges' option.  However, it must be a domain-joined account, not just a local server account.  Ensure the option 'Run whether user is logged on or not' is checked.
+To schedule the ADSync script using the Windows Task Scheduler, use 'Create Task' and specify a Domain user with sufficient permissions to read Active Directory.  It should not have to be a privileged account nor should you need to check the 'Run with highest privileges' option.  However, it must be a domain-joined account, not just a local server account.  Ensure the option 'Run whether user is logged on or not' is checked and the user has the 'Log on as a batch job' permission.
 
 In the 'Trigger' section, specify a frequency and time to run the script - we recommend daily (or less frequent) during a quiet time for most customers.  Set 'Recur  every 1 days' (or higher).  Ensure the 'Enabled' checkbox is checked.
 
