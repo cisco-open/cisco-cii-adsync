@@ -304,6 +304,17 @@ Here is an example for the 'Add arguments' field:
 Finally, in the 'Settings' section, we recommend you set the 'If the task is already running' option to 'Stop the existing instance'.
 
 
+## Sync Duration
+
+The duration of the ADSync depends on several factors but mainly how large an Active Directory user population you are uploading and how fast your server can upload to CII.
+
+When you run the script interactively it will show a progress bar with the current transfer rate and an 'ETA' to give you an indication of how long the full sync will take.  The ADSync log file will also record how long each upload cycle took.
+
+If you intend to do a sync more frequently than 24 hours, use the information from above to determine how long your syncs take and avoid scheduling the script too aggressively.
+
+As a datapoint, one customer syncs about 160,000 users in approximately 3 hours.
+
+
 ## Protecting API Credentials
 
 Security is paramount. The script implements robust measures to protect your Cisco Identity Intelligence API credentials:
@@ -311,6 +322,7 @@ Security is paramount. The script implements robust measures to protect your Cis
 *   **One-time Provisioning**: Credentials are set up once using the CII AD `Provision` script and then encrypted.
 *   **Encryption**: Client ID and Secret are encrypted at rest within a machine-specific configuration file.
 *   **Off-box Prevention**: The encrypted credentials cannot be used from a different machine, enhancing security by preventing simple file copying for compromise.
+
 
 ## Troubleshooting
 
