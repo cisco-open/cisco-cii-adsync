@@ -35,6 +35,12 @@
     #         NamePatterns = @("ext_*")
     #         Usernames    = @("contractor1")
     #     }
+    #     isAgentic = @{
+    #         Groups       = @("Agentic Accounts")
+    #         OUs          = @("OU=Agentic,DC=example,DC=com")
+    #         NamePatterns = @("agentic_*", "bot_*", "auto_*")
+    #         Usernames    = @("agentic_bot")
+    #     }
     # }
 
     # Example: Add more attributes to exclude (these are appended to the default internal list)

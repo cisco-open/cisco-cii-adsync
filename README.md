@@ -48,7 +48,7 @@ The solution leverages PowerShell scripts to act as a data collector and a secur
 *   **Nested Group Resolution**: Automatically resolves nested group memberships for accurate visibility.
 *   **Preview Mode**: Test your script configuration and view collected data before sending it to CII.
 *   **Attribute Filtering**: Tailor the script to fetch only specific attributes based on your organizational needs.
-*   **User Classification**: Define rules to classify users as service accounts, administrators, executives, etc.
+*   **User Classification**: Define rules to classify users as service accounts, administrators, executives, and to flag agentic identities.
 *   **User Filtering**: Include/exclude users based on OUs, naming patterns, or explicit lists.
 *   **Progress Tracking**: Periodic progress report with ETA and processing rates.
 
@@ -170,7 +170,7 @@ Available customizations:
 > ```
 
 *   **User Classification Rules**:
-    You can define rules within the script to classify users *before* ingestion into Cisco Identity Intelligence. This allows you to categorize users as External, Service Accounts, Admins, or Special Accounts (Executives). You can configure these classifications using four methods:
+    You can define rules within the script to classify users *before* ingestion into Cisco Identity Intelligence. This allows you to categorize users as External, Service Accounts, Admins, Special Accounts (Executives), and to flag agentic identities. You can configure these classifications using four methods:
 
     1.  **Active Directory Group Membership**: Classify users based on their membership in specific AD groups.
     2.  **Organizational Unit (OU) Membership**: Classify users based on the Organizational Unit they reside in. 
@@ -178,6 +178,8 @@ Available customizations:
     4.  **Explicit User Lists**: Provide a list of specific usernames for custom classification.
 
     You can leave these classification rules blank if you do not wish to use them for a specific category. The script has a few default rules for common built-in groups.
+    
+    Use the isAgentic flag to indicate to CII that an identity primarily performs agentic activities; this does not affect the user type.
 
 > ```powershell
 > classificationRules = @{
@@ -220,9 +222,20 @@ Available customizations:
 >         # Usernames    = @("vendor1", "consultant_jsmith")
 >         Usernames    = @()
 >     }
+>     # Define rules for agentic identities (flag only; does not change userType)
+>     isAgentic = @{
+>         # Groups       = @("Agentic Accounts", "Automation Bots")
+>         Groups       = @()
+>         # OUs          = @("OU=Agentic,DC=acme,DC=com")
+>         OUs          = @()
+>         # NamePatterns = @("agentic_*", "bot_*", "auto_*")
+>         NamePatterns = @()
+>         # Usernames    = @("agentic_bot", "automation_runner")
+>         Usernames    = @()
+>     }
 > ```
 
-If you use a custom AD attribute to define you user roles it is also possible to configure the script to use it and map its string values to CII user types.
+If you use a custom AD attribute to define your user roles it is also possible to configure the script to use it and map its string values to CII user types.
 > ```powershell
 > # Custom AD attribute classification and CII userType mapping
 > customAttributeMapping = @{
@@ -304,17 +317,6 @@ Here is an example for the 'Add arguments' field:
 Finally, in the 'Settings' section, we recommend you set the 'If the task is already running' option to 'Stop the existing instance'.
 
 
-## Sync Duration
-
-The duration of the ADSync depends on several factors but mainly how large an Active Directory user population you are uploading and how fast your server can upload to CII.
-
-When you run the script interactively it will show a progress bar with the current transfer rate and an 'ETA' to give you an indication of how long the full sync will take.  The ADSync log file will also record how long each upload cycle took.
-
-If you intend to do a sync more frequently than 24 hours, use the information from above to determine how long your syncs take and avoid scheduling the script too aggressively.
-
-As a datapoint, one customer syncs about 160,000 users in approximately 3 hours.
-
-
 ## Protecting API Credentials
 
 Security is paramount. The script implements robust measures to protect your Cisco Identity Intelligence API credentials:
@@ -322,7 +324,6 @@ Security is paramount. The script implements robust measures to protect your Cis
 *   **One-time Provisioning**: Credentials are set up once using the CII AD `Provision` script and then encrypted.
 *   **Encryption**: Client ID and Secret are encrypted at rest within a machine-specific configuration file.
 *   **Off-box Prevention**: The encrypted credentials cannot be used from a different machine, enhancing security by preventing simple file copying for compromise.
-
 
 ## Troubleshooting
 

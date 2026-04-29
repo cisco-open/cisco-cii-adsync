@@ -322,6 +322,13 @@ function Initialize-DefaultCustomization {
             NamePatterns = @()
             Usernames    = @("Guest")
         }
+        # Define rules for agentic accounts
+        isAgentic = @{
+            Groups       = @()
+            OUs          = @()
+            NamePatterns = @()
+            Usernames    = @()
+        }
     }
 
     # Custom AD attribute classification and CII userType mapping
@@ -1074,6 +1081,7 @@ function Get-CIIAttributes {
         isAdmin = $false
         isExecutive = $false
         isExternalAccount = $false
+        isAgentic = $false
     }
 
     $sam = $adAttributes.samAccountName
@@ -1146,6 +1154,7 @@ function Get-CIIAttributes {
         isAdmin         = $classifications.isAdmin
         isExecutive     = $classifications.isExecutive
         isExternalAccount = $classifications.isExternalAccount
+        isAgentic       = $classifications.isAgentic
     }
 
     if ($adAttributes.whenCreated -ne $null) {
