@@ -578,6 +578,50 @@ function Initialize-AttributeSizeWarnings {
     $script:attributeSizeWarnings = @{}
 }
 
+# Initialize classification summary counters and flag-to-counter mapping
+function Initialize-ClassificationSummary {
+    return @{
+        Summary = [ordered]@{
+            ServiceAccounts = 0
+            Admins = 0
+            Executives = 0
+            ExternalAccounts = 0
+            AgenticIdentities = 0
+            NormalAccounts = 0
+        }
+        Map = [ordered]@{
+            isServiceAccount = "ServiceAccounts"
+            isAdmin = "Admins"
+            isExecutive = "Executives"
+            isExternalAccount = "ExternalAccounts"
+            isAgentic = "AgenticIdentities"
+        }
+    }
+}
+
+# Update classification summary counters for one user
+function Update-ClassificationSummary {
+    param(
+        [hashtable]$CiiAttributes,
+        [hashtable]$ClassificationData
+    )
+
+    $classificationSummary = $ClassificationData.Summary
+    $classificationMap = $ClassificationData.Map
+
+    $hasClassification = $false
+    foreach ($classificationFlag in $classificationMap.Keys) {
+        if ($CiiAttributes[$classificationFlag]) {
+            $classificationSummary[$classificationMap[$classificationFlag]]++
+            $hasClassification = $true
+        }
+    }
+
+    if (-not $hasClassification) {
+        $classificationSummary.NormalAccounts++
+    }
+}
+
 # Function to pre-resolve group SIDs for classification rules
 function Initialize-GroupSIDResolution {
     $script:resolvedGroupSIDs = @{}
@@ -1305,6 +1349,7 @@ function Process-Users {
     $Count = 0
     $Processed = 0
     $Skipped = 0
+    $classificationData = Initialize-ClassificationSummary
     $lastProgressUpdate = Get-Date
 
     foreach ($Result in $Results) {
@@ -1331,6 +1376,7 @@ function Process-Users {
         $adAttributes = Get-ADAttributes -Properties $props
         $userGroupInfo = Get-UserGroupInfo -DistinguishedName $adAttributes.DistinguishedName -SkipGroupNames:$NoGroups
         $ciiAttributes = Get-CIIAttributes -adAttributes $adAttributes -userSIDs $userGroupInfo.UserSIDs
+        Update-ClassificationSummary -CiiAttributes $ciiAttributes -ClassificationData $classificationData
 
         # Batch users until we have enough to send
         $UserBatch += @{ adAttributes = $adAttributes; ciiAttributes = $ciiAttributes; groups = $userGroupInfo.Groups }
@@ -1350,12 +1396,29 @@ function Process-Users {
     Write-Progress -Activity "User Processing Complete" -Completed
     $endTime = Get-Date
     $totalTime = $endTime - $startTime
-    Write-Host "`n=== Processing Summary ==="
-    Write-Host "Total Users Evaluated: $Count"
-    Write-Host "Users Processed: $Processed"
-    Write-Host "Users Skipped: $Skipped"
-    Write-Host "Total Time: $($totalTime.ToString('hh\:mm\:ss'))"
-    Write-Host "Average Rate: $([math]::Round($Count / $totalTime.TotalSeconds, 2)) users/sec"
+    $averageRate = if ($totalTime.TotalSeconds -gt 0) { [math]::Round($Count / $totalTime.TotalSeconds, 2) } else { 0 }
+    $summaryLines = @(
+        "",
+        "=== Processing Summary ===",
+        "Total Users Evaluated: $Count",
+        "Users Processed: $Processed",
+        "Users Skipped: $Skipped",
+        "",
+        "=== Classification Summary ===",
+        "Service Accounts: $($classificationData.Summary.ServiceAccounts)",
+        "Admins: $($classificationData.Summary.Admins)",
+        "Executives: $($classificationData.Summary.Executives)",
+        "External Accounts: $($classificationData.Summary.ExternalAccounts)",
+        "Agentic Identities: $($classificationData.Summary.AgenticIdentities)",
+        "Normal Accounts: $($classificationData.Summary.NormalAccounts)",
+        "",
+        "Total Time: $($totalTime.ToString('hh\:mm\:ss'))",
+        "Average Rate: $averageRate users/sec"
+    )
+    foreach ($line in $summaryLines) {
+        Write-Host $line
+        Write-Log $line
+    }
     Write-Log "Processing completed. Total: $Count, Processed: $Processed, Skipped: $Skipped, Time: $($totalTime.ToString('hh\:mm\:ss'))"
 
     $Results.Dispose()

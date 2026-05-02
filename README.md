@@ -132,7 +132,7 @@ Once installed and configured, you can run the CII `ADSync.ps1` script to collec
     For continuous visibility and up-to-date data, it is recommended to schedule the CII `ADSync.ps1` script to run periodically using Windows Task Scheduler or your preferred automation tool. The script is designed to be efficient and can be run alongside other scheduled scripts. We recommend running it once in 24 hours.
 
 5.  **Output and Logging**:
-    The script will provide output indicating its progress, including validation steps, data collection, and transfer status. For successful operations, you will receive a summary of how many users were uploaded. In case of errors, specific error messages will be displayed on-screen as well as in the log called `ADSync.log`.
+    The script will provide output indicating its progress, including validation steps, data collection, and transfer status. For successful operations, you will receive a summary of how many users were evaluated, processed, skipped, and how processed users were classified. In case of errors, specific error messages will be displayed on-screen as well as in the log called `ADSync.log`.
 
 > ```powershell
 > .\ADSync.ps1 -KeyFilePath .\cisco-cii-AD-encryption.key -ConfigFilePath .\cisco-cii-AD-encrypted-config.json
@@ -143,6 +143,14 @@ Once installed and configured, you can run the CII `ADSync.ps1` script to collec
 > Total Users Evaluated: 10015
 > Users Processed: 15
 > Users Skipped: 10000
+> 
+> === Classification Summary ===
+> Service Accounts: 10
+> Admins: 18
+> Executives: 3
+> External Accounts: 7
+> Agentic Identities: 2
+> Normal Accounts: 54
 > Total Time: 00:00:51
 > Average Rate: 193.18 users/sec
 > ADSync completed at: 2025-08-04 09:25:25
