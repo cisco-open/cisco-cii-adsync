@@ -41,6 +41,12 @@
     #         NamePatterns = @("agentic_*", "bot_*", "auto_*")
     #         Usernames    = @("agentic_bot")
     #     }
+    #     isDeviceAdmin = @{
+    #         Groups       = @("Network Device Admins", "Firewall Admins")
+    #         OUs          = @("OU=Device Admins,DC=example,DC=com")
+    #         NamePatterns = @("netadmin_*", "tacacs_*")
+    #         Usernames    = @("switch_admin")
+    #     }
     # }
 
     # Example: Add more attributes to exclude (these are appended to the default internal list)

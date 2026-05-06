@@ -329,6 +329,13 @@ function Initialize-DefaultCustomization {
             NamePatterns = @()
             Usernames    = @()
         }
+        # Define rules for device administrator accounts
+        isDeviceAdmin = @{
+            Groups       = @()
+            OUs          = @()
+            NamePatterns = @()
+            Usernames    = @()
+        }
     }
 
     # Custom AD attribute classification and CII userType mapping
@@ -587,6 +594,7 @@ function Initialize-ClassificationSummary {
             Executives = 0
             ExternalAccounts = 0
             AgenticIdentities = 0
+            DeviceAdmins = 0
             NormalAccounts = 0
         }
         Map = [ordered]@{
@@ -595,6 +603,7 @@ function Initialize-ClassificationSummary {
             isExecutive = "Executives"
             isExternalAccount = "ExternalAccounts"
             isAgentic = "AgenticIdentities"
+            isDeviceAdmin = "DeviceAdmins"
         }
     }
 }
@@ -1126,6 +1135,7 @@ function Get-CIIAttributes {
         isExecutive = $false
         isExternalAccount = $false
         isAgentic = $false
+        isDeviceAdmin = $false
     }
 
     $sam = $adAttributes.samAccountName
@@ -1199,6 +1209,7 @@ function Get-CIIAttributes {
         isExecutive     = $classifications.isExecutive
         isExternalAccount = $classifications.isExternalAccount
         isAgentic       = $classifications.isAgentic
+        isDeviceAdmin   = $classifications.isDeviceAdmin
     }
 
     if ($adAttributes.whenCreated -ne $null) {
@@ -1405,12 +1416,13 @@ function Process-Users {
         "Users Skipped: $Skipped",
         "",
         "=== Classification Summary ===",
+        "Normal Accounts: $($classificationData.Summary.NormalAccounts)",
         "Service Accounts: $($classificationData.Summary.ServiceAccounts)",
         "Admins: $($classificationData.Summary.Admins)",
         "Executives: $($classificationData.Summary.Executives)",
         "External Accounts: $($classificationData.Summary.ExternalAccounts)",
         "Agentic Identities: $($classificationData.Summary.AgenticIdentities)",
-        "Normal Accounts: $($classificationData.Summary.NormalAccounts)",
+        "Device Admins: $($classificationData.Summary.DeviceAdmins)",
         "",
         "Total Time: $($totalTime.ToString('hh\:mm\:ss'))",
         "Average Rate: $averageRate users/sec"

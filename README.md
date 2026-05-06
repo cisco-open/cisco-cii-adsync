@@ -48,7 +48,7 @@ The solution leverages PowerShell scripts to act as a data collector and a secur
 *   **Nested Group Resolution**: Automatically resolves nested group memberships for accurate visibility.
 *   **Preview Mode**: Test your script configuration and view collected data before sending it to CII.
 *   **Attribute Filtering**: Tailor the script to fetch only specific attributes based on your organizational needs.
-*   **User Classification**: Define rules to classify users as service accounts, administrators, executives, and to flag agentic identities.
+*   **User Classification**: Define rules to classify users as service accounts, administrators, executives, and to flag agentic or device administrator identities.
 *   **User Filtering**: Include/exclude users based on OUs, naming patterns, or explicit lists.
 *   **Progress Tracking**: Periodic progress report with ETA and processing rates.
 
@@ -145,12 +145,13 @@ Once installed and configured, you can run the CII `ADSync.ps1` script to collec
 > Users Skipped: 10000
 > 
 > === Classification Summary ===
+> Normal Accounts: 54
 > Service Accounts: 10
 > Admins: 18
 > Executives: 3
 > External Accounts: 7
 > Agentic Identities: 2
-> Normal Accounts: 54
+> Device Admin Accounts: 9
 > Total Time: 00:00:51
 > Average Rate: 193.18 users/sec
 > ADSync completed at: 2025-08-04 09:25:25
@@ -178,7 +179,7 @@ Available customizations:
 > ```
 
 *   **User Classification Rules**:
-    You can define rules within the script to classify users *before* ingestion into Cisco Identity Intelligence. This allows you to categorize users as External, Service Accounts, Admins, Special Accounts (Executives), and to flag agentic identities. You can configure these classifications using four methods:
+    You can define rules within the script to classify users *before* ingestion into Cisco Identity Intelligence. This allows you to categorize users as External, Service Accounts, Admins, Special Accounts (Executives), and to flag agentic or device administrator identities. You can configure these classifications using four methods:
 
     1.  **Active Directory Group Membership**: Classify users based on their membership in specific AD groups.
     2.  **Organizational Unit (OU) Membership**: Classify users based on the Organizational Unit they reside in. 
@@ -188,6 +189,8 @@ Available customizations:
     You can leave these classification rules blank if you do not wish to use them for a specific category. The script has a few default rules for common built-in groups.
     
     Use the isAgentic flag to indicate to CII that an identity primarily performs agentic activities; this does not affect the user type.
+
+    Use the isDeviceAdmin flag to indicate to CII that an identity is expected to perform device administration activities (for example configuring a switch, router, or firewall administration and TACACS usage); this does not affect the user type.
 
 > ```powershell
 > classificationRules = @{
@@ -239,6 +242,17 @@ Available customizations:
 >         # NamePatterns = @("agentic_*", "bot_*", "auto_*")
 >         NamePatterns = @()
 >         # Usernames    = @("agentic_bot", "automation_runner")
+>         Usernames    = @()
+>     }
+>     # Define rules for device administrators (flag only; does not change userType)
+>     isDeviceAdmin = @{
+>         # Groups       = @("Network Device Admins", "Firewall Admins")
+>         Groups       = @()
+>         # OUs          = @("OU=Device Admins,DC=acme,DC=com")
+>         OUs          = @()
+>         # NamePatterns = @("netadmin_*", "tacacs_*")
+>         NamePatterns = @()
+>         # Usernames    = @("switch_admin", "router_ops")
 >         Usernames    = @()
 >     }
 > ```
