@@ -299,6 +299,7 @@ function Initialize-DefaultCustomization {
             Groups       = @()
             OUs          = @()
             NamePatterns = @()
+            DescPatterns = @()
             Usernames    = @()
         }
         # Define rules for administrators
@@ -306,6 +307,7 @@ function Initialize-DefaultCustomization {
             Groups       = @("Domain Admins", "Enterprise Admins", "Administrators")
             OUs          = @()
             NamePatterns = @()
+            DescPatterns = @()
             Usernames    = @("Administrator")
         }
         # Define rules for executives/special accounts
@@ -313,6 +315,7 @@ function Initialize-DefaultCustomization {
             Groups       = @()
             OUs          = @()
             NamePatterns = @()
+            DescPatterns = @()
             Usernames    = @()
         }
         # Define rules for external accounts
@@ -320,6 +323,7 @@ function Initialize-DefaultCustomization {
             Groups       = @()
             OUs          = @()
             NamePatterns = @()
+            DescPatterns = @()
             Usernames    = @("Guest")
         }
         # Define rules for agentic accounts
@@ -327,6 +331,7 @@ function Initialize-DefaultCustomization {
             Groups       = @()
             OUs          = @()
             NamePatterns = @()
+            DescPatterns = @()
             Usernames    = @()
         }
         # Define rules for device administrator accounts
@@ -334,6 +339,7 @@ function Initialize-DefaultCustomization {
             Groups       = @()
             OUs          = @()
             NamePatterns = @()
+            DescPatterns = @()
             Usernames    = @()
         }
     }
@@ -355,12 +361,14 @@ function Initialize-DefaultCustomization {
     $script:includeRules = @{
         OUs          = @()
         NamePatterns = @()
+        DescPatterns = @()
     }
 
     # Exclude users in these OUs or with specific naming conventions
     $script:excludeRules = @{
         OUs          = @()
         NamePatterns = @()
+        DescPatterns = @()
     }
 
     # Customize attributes to exclude
@@ -1181,11 +1189,21 @@ function Get-CIIAttributes {
                 }
             }
 
-            # Name patterns
+            # Name and description patterns
             $matchesPattern = $false
+            $description = $null
+            if ($adAttributes.ContainsKey('description')) { $description = $adAttributes.description }
             if ($rule.NamePatterns.Count -gt 0) {
                 foreach ($pattern in $rule.NamePatterns) {
                     if ($sam -like $pattern) {
+                        $matchesPattern = $true
+                        break
+                    }
+                }
+            }
+            if (-not $matchesPattern -and $rule.DescPatterns.Count -gt 0 -and $description) {
+                foreach ($pattern in $rule.DescPatterns) {
+                    if ($description -like $pattern) {
                         $matchesPattern = $true
                         break
                     }

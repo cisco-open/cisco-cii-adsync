@@ -15,36 +15,42 @@
     #         Groups       = @("Service Accounts")
     #         OUs          = @("OU=Service Accounts,DC=example,DC=com")
     #         NamePatterns = @("svc_*", "sa_*")
+    #         DescPatterns = @("*SQL Service*", "*Service Account*")
     #         Usernames    = @("svc_special")
     #     }
     #     isAdmin = @{
     #         Groups       = @("Domain Admins", "Enterprise Admins")
     #         OUs          = @("OU=Admins,DC=example,DC=com")
     #         NamePatterns = @("admin_*")
+    #         DescPatterns = @("*Admin*", "*Administrator*")
     #         Usernames    = @("Administrator")
     #     }
     #     isExecutive = @{
     #         Groups       = @("Executives")
     #         OUs          = @("OU=Executives,DC=example,DC=com")
     #         NamePatterns = @("exec_*")
+    #         DescPatterns = @("*Executive*", "*VP*", "*CFO*")
     #         Usernames    = @("ceo", "cfo")
     #     }
     #     isExternalAccount = @{
     #         Groups       = @("External Users")
     #         OUs          = @("OU=External,DC=example,DC=com")
     #         NamePatterns = @("ext_*")
+    #         DescPatterns = @("*Contractor*", "*Vendor*")
     #         Usernames    = @("contractor1")
     #     }
     #     isAgentic = @{
     #         Groups       = @("Agentic Accounts")
     #         OUs          = @("OU=Agentic,DC=example,DC=com")
     #         NamePatterns = @("agentic_*", "bot_*", "auto_*")
+    #         DescPatterns = @("*Agentic*", "*Automation*", "*Bot*")
     #         Usernames    = @("agentic_bot")
     #     }
     #     isDeviceAdmin = @{
     #         Groups       = @("Network Device Admins", "Firewall Admins")
     #         OUs          = @("OU=Device Admins,DC=example,DC=com")
     #         NamePatterns = @("netadmin_*", "tacacs_*")
+    #         DescPatterns = @("*TACACS*", "*Network Device Admin*")
     #         Usernames    = @("switch_admin")
     #     }
     # }

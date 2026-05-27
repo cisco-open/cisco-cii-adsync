@@ -179,15 +179,16 @@ Available customizations:
 > ```
 
 *   **User Classification Rules**:
-    You can define rules within the script to classify users *before* ingestion into Cisco Identity Intelligence. This allows you to categorize users as External, Service Accounts, Admins, Special Accounts (Executives), and to flag agentic or device administrator identities. You can configure these classifications using four methods:
+    You can define rules within the script to classify users *before* ingestion into Cisco Identity Intelligence. This allows you to categorize users as External, Service Accounts, Admins, Special Accounts (Executives), and to flag agentic or device administrator identities. You can configure these classifications using five methods:
 
     1.  **Active Directory Group Membership**: Classify users based on their membership in specific AD groups.
     2.  **Organizational Unit (OU) Membership**: Classify users based on the Organizational Unit they reside in. 
     3.  **Name Patterns**: Use patterns (e.g., prefixes like `svc_`) in usernames for classification.
-    4.  **Explicit User Lists**: Provide a list of specific usernames for custom classification.
+    4.  **Description Patterns**: Use patterns in the AD `description` attribute for classification.
+    5.  **Explicit User Lists**: Provide a list of specific usernames for custom classification.
 
     You can leave these classification rules blank if you do not wish to use them for a specific category. The script has a few default rules for common built-in groups.
-    
+
     Use the isAgentic flag to indicate to CII that an identity primarily performs agentic activities; this does not affect the user type.
 
     Use the isDeviceAdmin flag to indicate to CII that an identity is expected to perform device administration activities (for example configuring a switch, router, or firewall administration and TACACS usage); this does not affect the user type.
@@ -202,14 +203,22 @@ Available customizations:
 >         OUs          = @()
 >         # NamePatterns = @("svc_*", "sa_*")
 >         NamePatterns = @()
+>         # DescPatterns = @("*SQL Service*", "*Service Account*")
+>         DescPatterns = @()
 >         # Usernames    = @("svc_special", "krbtgt")
 >         Usernames    = @()
 >     }
 >     # Define rules for administrators
 >     isAdmin = @{
+>         # Groups       = @("Domain Admins", "Enterprise Admins")
 >         Groups       = @("Domain Admins", "Enterprise Admins", "Administrators")
+>         # OUs          = @("OU=Admins,DC=acme,DC=com")
 >         OUs          = @()
+>         # NamePatterns = @("admin_*")
 >         NamePatterns = @()
+>         # DescPatterns = @("*Admin*", "*Administrator*")
+>         DescPatterns = @()
+>         # Usernames    = @("Administrator")
 >         Usernames    = @("Administrator")
 >     }
 >     # Define rules for executives/special accounts
@@ -218,7 +227,10 @@ Available customizations:
 >         Groups       = @()
 >         # OUs          = @("OU=Executive OU,DC=acme,DC=com")
 >         OUs          = @()
+>         # NamePatterns = @("exec_*")
 >         NamePatterns = @()
+>         # DescPatterns = @("*Executive*", "*VP*", "*CFO*")
+>         DescPatterns = @()
 >         # Usernames    = @("jbrown_svp", "asmith_cfo")
 >         Usernames    = @()
 >     }
@@ -230,6 +242,8 @@ Available customizations:
 >         OUs          = @()
 >         # NamePatterns = @("ext_*", "*contractor*", "*partner*")
 >         NamePatterns = @()
+>         # DescPatterns = @("*Contractor*", "*Vendor*")
+>         DescPatterns = @()
 >         # Usernames    = @("vendor1", "consultant_jsmith")
 >         Usernames    = @()
 >     }
@@ -241,6 +255,8 @@ Available customizations:
 >         OUs          = @()
 >         # NamePatterns = @("agentic_*", "bot_*", "auto_*")
 >         NamePatterns = @()
+>         # DescPatterns = @("*Agentic*", "*Automation*", "*Bot*")
+>         DescPatterns = @()
 >         # Usernames    = @("agentic_bot", "automation_runner")
 >         Usernames    = @()
 >     }
@@ -252,6 +268,8 @@ Available customizations:
 >         OUs          = @()
 >         # NamePatterns = @("netadmin_*", "tacacs_*")
 >         NamePatterns = @()
+>         # DescPatterns = @("*TACACS*", "*Network Device Admin*")
+>         DescPatterns = @()
 >         # Usernames    = @("switch_admin", "router_ops")
 >         Usernames    = @()
 >     }
