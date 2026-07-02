@@ -275,13 +275,13 @@ Available customizations:
 >     }
 > ```
 
-If you use a custom AD attribute to define your user roles it is also possible to configure the script to use it and map its string values to CII user types.
+If you use a custom AD attribute to define your user roles, you can configure the script to map its values to CII user types. The values on the left are examples of customer-defined values stored in the selected AD attribute. The values on the right must be one of the predefined CII user types: `employee`, `admin`, `service`, `external`, or `executive`. This mapping does not create new CII user types.
 > ```powershell
 > # Custom AD attribute classification and CII userType mapping
 > customAttributeMapping = @{
 >     # Specify the AD attribute name that contains classification values
->     AttributeName = "yourCustomAttribute"  # e.g. "extensionAttribute1" or "customEmployeeType"
->     # Map AD attribute values to CII userType values
+>     AttributeName = "yourCustomAttribute"
+>     # Map customer-defined AD attribute values to predefined CII userType values
 >     ValueMappings = @{
 >         "user.employee.regular" = "employee"
 >         "user.admin"            = "admin"
