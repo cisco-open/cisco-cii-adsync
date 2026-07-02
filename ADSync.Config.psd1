@@ -65,13 +65,18 @@
     # specifiedGroups = @("Domain Admins", "HR", "Finance", "IT Support")
 
     # Example: Custom attribute mapping for userType
+    # The values on the left are examples of customer-defined values stored in the
+    # selected AD attribute. The values on the right must be one of the predefined
+    # CII user types: employee, admin, service, external, or executive.
+    # This mapping does not create new CII user types.
     # customAttributeMapping = @{
-    #     AttributeName = "extensionAttribute1"
+    #     AttributeName = "yourCustomAttribute"
     #     ValueMappings = @{
-    #         "contractor" = "external"
-    #         "employee"   = "employee"
-    #         "admin"      = "admin"
-    #         "service"    = "service"
+    #         "user.contractor"       = "external"
+    #         "user.employee.regular" = "employee"
+    #         "user.admin"            = "admin"
+    #         "user.service"          = "service"
+    #         "user.executive"        = "executive"
     #     }
     #     DefaultUserType = "employee"
     # }
